@@ -1,0 +1,75 @@
+# ──────────────────────────────────────────────────────────────
+# superMen — локальный стек: PostgreSQL + Go backend + React/Vite web.
+# Запуск:  make up   (или  docker compose up -d --build )
+# Переменные берутся из .env (cp .env.example .env). См. docs/13-running.md.
+# ──────────────────────────────────────────────────────────────
+
+services:
+  # ── PostgreSQL 16 ────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: supermen-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-supermen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-supermen}
+      POSTGRES_DB: ${POSTGRES_DB:-supermen}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # SQL из migrations/ применяется автоматически при ПЕРВОЙ инициализации тома.
+      # Для повторного применения используй `make migrate` (см. docs/13-running.md).
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-supermen} -d ${POSTGRES_DB:-supermen}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Go backend (REST API + bot + cron) ──────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supermen-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Внутри сети compose host БД = имя сервиса "postgres", а не localhost.
+      DATABASE_URL: ${DATABASE_URL:-postgres://supermen:supermen@postgres:5432/supermen?sslmode=disable}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_WEBAPP_URL: ${TELEGRAM_WEBAPP_URL:-}
+      PORT: ${PORT:-8080}
+      ENV: ${ENV:-dev}
+      NOTIFY_TICK: ${NOTIFY_TICK:-5m}
+    ports:
+      - "${PORT:-8080}:8080"
+
+  # ── React Mini App (Vite, статика через preview) ────────
+  web:
+    image: node:22-alpine
+    container_name: supermen-web
+    restart: unless-stopped
+    working_dir: /app
+    depends_on:
+      - backend
+    environment:
+      # Куда фронт ходит за API (Vite читает import.meta.env.VITE_API_BASE).
+      VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8080}
+    volumes:
+      - ./web:/app
+      # Анонимный том, чтобы node_modules контейнера не затирался хостовым bind-mount.
+      - /app/node_modules
+    ports:
+      - "${WEB_PORT:-5173}:5173"
+    # install → build → preview раздаёт собранную статику на 0.0.0.0:5173.
+    command: >
+      sh -c "npm install &&
+             npm run build &&
+             npm run preview -- --host 0.0.0.0 --port 5173"
+
+volumes:
+  pgdata:

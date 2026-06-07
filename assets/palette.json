@@ -1,0 +1,32 @@
+{
+  "_comment": "Master palette + 6 class ramps for superMen pixel-art (docs/12 §3). Each ramp = 4 tones: shadow -> base -> light -> highlight. Hex strings #RRGGBB. The generator (cmd/genassets) reads this file; if missing it falls back to the same values embedded in code. Neutrals are shared materials (skin, metal, leather, wood, cloth). Rarity colors map item tints by docs/04 §4.",
+  "version": 1,
+  "canvas": { "w": 128, "h": 192 },
+  "scale": 3,
+  "neutrals": {
+    "skin":        ["#7A4A33", "#B07A52", "#D8A878", "#F0D2A8"],
+    "metal":       ["#3A3F4A", "#6B7280", "#9CA3AF", "#E5E7EB"],
+    "leather":     ["#3A2516", "#5C3A1E", "#8A5A2E", "#B98A52"],
+    "wood":        ["#3A2A18", "#5E4326", "#8A6438", "#B98E5C"],
+    "cloth":       ["#4A4A52", "#6E6E78", "#9A9AA4", "#C8C8D0"],
+    "outline":     ["#14131A"],
+    "shadowGround":["#0A0A12"],
+    "white":       ["#F4F4F8"]
+  },
+  "classRamps": {
+    "warrior":    { "_dominant": "STR", "_theme": "red-orange",     "shadow": "#5A1410", "base": "#A8281C", "light": "#E2562C", "highlight": "#FFB070" },
+    "sage":       { "_dominant": "INT", "_theme": "blue-indigo",    "shadow": "#1B2A6B", "base": "#2748A8", "light": "#3B6FE4", "highlight": "#9EC2FF" },
+    "paladin":    { "_dominant": "DIS", "_theme": "gold-white",     "shadow": "#7A5410", "base": "#C8941C", "light": "#F0C84A", "highlight": "#FFF2C0" },
+    "druid":      { "_dominant": "VIT", "_theme": "green-teal",     "shadow": "#10402E", "base": "#1E8A5A", "light": "#34C088", "highlight": "#9CF0CC" },
+    "bard":       { "_dominant": "CHA", "_theme": "purple-magenta", "shadow": "#4A1052", "base": "#9A1EA0", "light": "#D63CC8", "highlight": "#FFA0EE" },
+    "adventurer": { "_dominant": "balance", "_theme": "orange-earthy", "shadow": "#4A2E12", "base": "#9A5E22", "light": "#D68A34", "highlight": "#F4C880" }
+  },
+  "_rarityComment": "docs/04 §4 rarity -> tint; common grey ... legendary orange. [shadow, base, light, highlight].",
+  "rarityColors": {
+    "common":    ["#4A4A52", "#7A7A84", "#A8A8B2", "#D8D8E0"],
+    "uncommon":  ["#16602E", "#2A9A4A", "#48C870", "#A8F0BC"],
+    "rare":      ["#163A78", "#2A66C8", "#4A92F0", "#AECCFF"],
+    "epic":      ["#48166A", "#8A2EC8", "#B45CF0", "#E0AEFF"],
+    "legendary": ["#7A3A08", "#D6741C", "#F4A030", "#FFE0A0"]
+  }
+}

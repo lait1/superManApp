@@ -1,0 +1,116 @@
+/*
+ * Design tokens (docs/05 + docs/12).
+ *
+ * Telegram theme params are injected at runtime by src/telegram/sdk.ts as
+ * --tg-* custom properties. The fallbacks below are sensible defaults for the
+ * dev browser (dark scene). UI chrome uses --tg-* (themed); the pixel-art scene
+ * panel uses fixed colours (docs/12 §2 — sprite palette never follows theme).
+ */
+
+:root {
+  /* ── Telegram theme (overwritten at runtime) ──────────────────────────── */
+  --tg-bg: #0f1116;
+  --tg-text: #e8e8ee;
+  --tg-hint: #8a8f9c;
+  --tg-link: #5aa9ff;
+  --tg-button: #3b6fe4;
+  --tg-button-text: #ffffff;
+  --tg-secondary-bg: #181b22;
+  --tg-header-bg: #14161c;
+  --tg-accent-text: #5aa9ff;
+  --tg-section-bg: #181b22;
+  --tg-section-header-text: #8a8f9c;
+  --tg-subtitle-text: #9aa0ad;
+  --tg-destructive-text: #ff5a5a;
+
+  /* ── Fixed scene-panel palette (docs/12, theme-independent) ───────────── */
+  --scene-bg: #1b2a3a;
+  --scene-bg-2: #15202d;
+  --scene-border: #0a1118;
+  --scene-highlight: #2b3f54;
+
+  /* ── Rarity colours (docs/04) ─────────────────────────────────────────── */
+  --rarity-common: #9aa0ad;
+  --rarity-uncommon: #5fc26b;
+  --rarity-rare: #3b6fe4;
+  --rarity-epic: #a558e8;
+  --rarity-legendary: #f0a93b;
+
+  /* ── Class ramps dominants (docs/12 §9) ───────────────────────────────── */
+  --class-warrior: #e2562b;
+  --class-sage: #3b6fe4;
+  --class-paladin: #f0d23b;
+  --class-druid: #2bc2a8;
+  --class-bard: #c23baf;
+  --class-adventurer: #d98a3b;
+
+  /* ── Stat accent colours (docs/05 §2) ─────────────────────────────────── */
+  --stat-str: #e2562b;
+  --stat-int: #3b6fe4;
+  --stat-dis: #f0d23b;
+  --stat-vit: #e2456b;
+  --stat-cha: #c23baf;
+
+  /* ── Spacing scale (4px base) ─────────────────────────────────────────── */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* ── Radii ────────────────────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-pixel: 'Press Start 2P', 'VT323', ui-monospace, 'SF Mono', Menlo,
+    monospace;
+
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+
+  --leading-tight: 1.15;
+  --leading-normal: 1.4;
+
+  /* ── Motion (docs/05 §6) ──────────────────────────────────────────────── */
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 380ms;
+  --dur-reward: 700ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.2);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --spring-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  --tabbar-height: 60px;
+  --fab-size: 56px;
+  --content-max-width: 480px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+
+  /* ── Elevation ────────────────────────────────────────────────────────── */
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-fab: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --z-tabbar: 100;
+  --z-fab: 110;
+  --z-modal: 200;
+  --z-reward: 300;
+}

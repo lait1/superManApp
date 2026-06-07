@@ -1,0 +1,215 @@
+{
+  "canvas": {
+    "w": 128,
+    "h": 192
+  },
+  "scale": 3,
+  "anchors": {
+    "back_mount": [
+      64,
+      88
+    ],
+    "chest_center": [
+      64,
+      96
+    ],
+    "feet_baseline": 176,
+    "hand_right": [
+      96,
+      110
+    ],
+    "head_center": [
+      64,
+      40
+    ]
+  },
+  "layerOrder": [
+    "scene",
+    "auraBack",
+    "back",
+    "body",
+    "boots",
+    "armor",
+    "arms",
+    "head",
+    "headgear",
+    "weapon",
+    "amulet",
+    "auraFront",
+    "frame"
+  ],
+  "classes": [
+    "warrior",
+    "sage",
+    "paladin",
+    "druid",
+    "bard",
+    "adventurer"
+  ],
+  "rankStages": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "ranks": {
+    "1": "recruit",
+    "2": "seeker",
+    "3": "veteran",
+    "4": "master",
+    "5": "legend"
+  },
+  "bodies": {
+    "adventurer": {
+      "1": "body_adventurer_r1.png",
+      "2": "body_adventurer_r2.png",
+      "3": "body_adventurer_r3.png",
+      "4": "body_adventurer_r4.png",
+      "5": "body_adventurer_r5.png"
+    },
+    "bard": {
+      "1": "body_bard_r1.png",
+      "2": "body_bard_r2.png",
+      "3": "body_bard_r3.png",
+      "4": "body_bard_r4.png",
+      "5": "body_bard_r5.png"
+    },
+    "druid": {
+      "1": "body_druid_r1.png",
+      "2": "body_druid_r2.png",
+      "3": "body_druid_r3.png",
+      "4": "body_druid_r4.png",
+      "5": "body_druid_r5.png"
+    },
+    "paladin": {
+      "1": "body_paladin_r1.png",
+      "2": "body_paladin_r2.png",
+      "3": "body_paladin_r3.png",
+      "4": "body_paladin_r4.png",
+      "5": "body_paladin_r5.png"
+    },
+    "sage": {
+      "1": "body_sage_r1.png",
+      "2": "body_sage_r2.png",
+      "3": "body_sage_r3.png",
+      "4": "body_sage_r4.png",
+      "5": "body_sage_r5.png"
+    },
+    "warrior": {
+      "1": "body_warrior_r1.png",
+      "2": "body_warrior_r2.png",
+      "3": "body_warrior_r3.png",
+      "4": "body_warrior_r4.png",
+      "5": "body_warrior_r5.png"
+    }
+  },
+  "scenes": {
+    "adventurer": "scene_adventurer.png",
+    "bard": "scene_bard.png",
+    "druid": "scene_druid.png",
+    "paladin": "scene_paladin.png",
+    "sage": "scene_sage.png",
+    "warrior": "scene_warrior.png"
+  },
+  "auras": {
+    "1": "aura_r1.png",
+    "2": "aura_r2.png",
+    "3": "aura_r3.png",
+    "4": "aura_r4.png",
+    "5": "aura_r5.png"
+  },
+  "frames": {
+    "1": "frame_r1.png",
+    "2": "frame_r2.png",
+    "3": "frame_r3.png",
+    "4": "frame_r4.png",
+    "5": "frame_r5.png"
+  },
+  "items": [
+    {
+      "id": "helm_iron",
+      "slot": "head",
+      "rarity": "common",
+      "file": "item_helm_iron.png"
+    },
+    {
+      "id": "hood_seeker",
+      "slot": "head",
+      "rarity": "uncommon",
+      "file": "item_hood_seeker.png"
+    },
+    {
+      "id": "crown_sage",
+      "slot": "head",
+      "rarity": "epic",
+      "file": "item_crown_sage.png"
+    },
+    {
+      "id": "vest_padded",
+      "slot": "armor",
+      "rarity": "common",
+      "file": "item_vest_padded.png"
+    },
+    {
+      "id": "armor_titan",
+      "slot": "armor",
+      "rarity": "legendary",
+      "file": "item_armor_titan.png"
+    },
+    {
+      "id": "sword_short",
+      "slot": "weapon",
+      "rarity": "common",
+      "file": "item_sword_short.png"
+    },
+    {
+      "id": "blade_focus",
+      "slot": "weapon",
+      "rarity": "epic",
+      "file": "item_blade_focus.png"
+    },
+    {
+      "id": "staff_arcane",
+      "slot": "weapon",
+      "rarity": "rare",
+      "file": "item_staff_arcane.png"
+    },
+    {
+      "id": "amulet_owl",
+      "slot": "amulet",
+      "rarity": "rare",
+      "file": "item_amulet_owl.png"
+    },
+    {
+      "id": "amulet_sun",
+      "slot": "amulet",
+      "rarity": "legendary",
+      "file": "item_amulet_sun.png"
+    },
+    {
+      "id": "cloak_traveler",
+      "slot": "back",
+      "rarity": "uncommon",
+      "file": "item_cloak_traveler.png"
+    },
+    {
+      "id": "wings_phoenix",
+      "slot": "back",
+      "rarity": "legendary",
+      "file": "item_wings_phoenix.png"
+    },
+    {
+      "id": "boots_leather",
+      "slot": "boots",
+      "rarity": "common",
+      "file": "item_boots_leather.png"
+    },
+    {
+      "id": "boots_swift",
+      "slot": "boots",
+      "rarity": "rare",
+      "file": "item_boots_swift.png"
+    }
+  ]
+}
