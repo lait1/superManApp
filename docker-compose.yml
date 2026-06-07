@@ -57,8 +57,9 @@ services:
     depends_on:
       - backend
     environment:
-      # Куда фронт ходит за API (Vite читает import.meta.env.VITE_API_BASE).
-      VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8080}
+      # Фронт ходит на относительный /api/v1; Vite preview проксирует /api сюда.
+      # Внутри сети compose бэкенд доступен по имени сервиса "backend", не localhost.
+      API_PROXY_TARGET: ${API_PROXY_TARGET:-http://backend:8080}
     volumes:
       - ./web:/app
       # Анонимный том, чтобы node_modules контейнера не затирался хостовым bind-mount.

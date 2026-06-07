@@ -206,7 +206,7 @@ type ShopItem struct {
 	Name        string     `json:"name"`
 	Slot        string     `json:"slot"` // weapon|armor|amulet|aura|background|consumable
 	Rarity      string     `json:"rarity"`
-	Price       *int       `json:"price,omitempty"` // nil = not for sale
+	Price       *int       `json:"price"` // nil = not for sale → serialized as explicit null (matches client type number|null)
 	Effect      ItemEffect `json:"effect"`
 	Purchasable bool       `json:"purchasable"`
 	Icon        string     `json:"icon"`

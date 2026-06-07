@@ -58,8 +58,9 @@ const rowStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
-function GoldBadge({ gold }: { gold: number | null }) {
-  if (gold === null) return null;
+function GoldBadge({ gold }: { gold: number | null | undefined }) {
+  // `== null` ловит и null, и undefined (у непокупаемых предметов цена может отсутствовать).
+  if (gold == null) return null;
   return (
     <span className="muted" style={{ fontSize: 'var(--text-sm)', whiteSpace: 'nowrap' }}>
       💰 {formatGold(gold)}

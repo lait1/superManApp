@@ -124,32 +124,102 @@ make genassets        # = go run ./cmd/genassets
 
 ---
 
-## 4. Настройка Telegram-бота и Mini App
+## 4. Запуск нового приложения в Telegram — пошагово
 
-Полная схема — в [10 — Telegram Mini App](./10-telegram-mini-app.md). Кратко:
+Полная теория — в [10 — Telegram Mini App](./10-telegram-mini-app.md). Здесь — рабочий
+пошаговый гайд «с нуля до открытия Mini App в Telegram».
 
-### 4.1 Создать бота (BotFather)
+> **Как связаны части.** Фронт (Vite, `:5173`) обращается к API по относительному
+> `/api/v1`, а Vite-dev **уже проксирует** `/api → localhost:8080` (см. `web/vite.config.ts`).
+> Поэтому в Telegram достаточно прокинуть HTTPS-туннель к **одному** порту `:5173` — он
+> сам проксирует API на бэкенд. (Бэкенд статику не раздаёт — это путь для прода, см. §4.6.)
 
-1. В Telegram открой [@BotFather](https://t.me/BotFather) → `/newbot` → получи **BOT_TOKEN**.
-2. Положи токен в `.env`: `TELEGRAM_BOT_TOKEN=...` (только на сервере, в клиент он не попадает —
-   [10 §2](./10-telegram-mini-app.md#2-идентификация-initdata)).
+### Шаг 1. Создать бота и получить токен
 
-### 4.2 Привязать Mini App
+1. В Telegram открой [@BotFather](https://t.me/BotFather) → `/newbot` → задай имя и username
+   → получи **BOT_TOKEN** (вида `1234567890:AA...`).
+2. Положи токен в `.env`:
+   ```env
+   TELEGRAM_BOT_TOKEN=1234567890:AAyourtoken
+   ```
+   Токен живёт только на сервере (нужен для валидации `initData` и отправки сообщений),
+   в клиент не попадает ([10 §2](./10-telegram-mini-app.md#2-идентификация-initdata)).
 
-3. Mini App требует **публичный HTTPS-URL** ([07 §6](./07-architecture.md#6-деплой-замысел)).
-   Для локальной разработки прокинь туннель к Vite (например `cloudflared` / `ngrok`) и
-   возьми его `https://...`-адрес.
-4. В BotFather: `/setmenubutton` (или Mini App через `/newapp`) → укажи этот HTTPS-URL.
-5. Пропиши его же в `.env`: `TELEGRAM_WEBAPP_URL=https://...`.
+### Шаг 2. Запустить бэкенд (с токеном)
 
-### 4.3 Проверить
+```bash
+make dev
+#   = ENV=dev PORT=8080 ... go run .   (memory-store, без БД)
+```
+- `ENV=dev` оставляем — он разрешает и `initData` (из Telegram), и device-id fallback
+  (для проверки в браузере). Бэкенд подхватит `TELEGRAM_BOT_TOKEN` из `.env`.
+- Хочешь сохранять прогресс между перезапусками — подними Postgres по §2 и задай
+  `DATABASE_URL` (тогда нужен и pgx-драйвер, см. §4.6).
 
-6. Отправь боту `/start` → должно прийти приветствие с кнопкой «Открыть superMen»
-   (`web_app`-кнопка, [10 §6](./10-telegram-mini-app.md#6-входящие-апдейты-бота)).
-7. По кнопке Mini App открывается внутри Telegram; сервер валидирует `initData`
-   (HMAC-SHA256 + `auth_date`, [10 §2](./10-telegram-mini-app.md#2-идентификация-initdata)).
+### Шаг 3. Запустить фронт (Vite)
+
+```bash
+make web-dev
+#   = cd web && npm install && npm run dev   → http://localhost:5173
+```
+
+### Шаг 4. Поднять HTTPS-туннель к :5173
+
+Telegram пускает в Mini App **только публичный HTTPS-URL** — локальный туннель даёт его:
+
+```bash
+# вариант cloudflared (без аккаунта, быстрый):
+cloudflared tunnel --url http://localhost:5173
+
+# или ngrok:
+ngrok http 5173
+```
+Скопируй выданный `https://<что-то>.trycloudflare.com` (или `*.ngrok-free.app`).
+
+> ℹ️ **Туннель и allowedHosts.** Домены `*.trycloudflare.com`, `*.ngrok-free.app`,
+> `*.ngrok.io` уже разрешены в `web/vite.config.ts` (`allowedHosts`). Если используешь
+> другой туннель-домен — добавь его туда и перезапусти `make web-dev`.
+
+### Шаг 5. Привязать Mini App к боту (BotFather)
+
+Положи тот же HTTPS-URL в `.env` (его использует бот для `web_app`-кнопок в нотификациях):
+```env
+TELEGRAM_WEBAPP_URL=https://<твой-туннель>
+```
+Затем в [@BotFather](https://t.me/BotFather) — любой из способов:
+- **Кнопка-меню в чате:** `/setmenubutton` → выбери бота → текст кнопки + укажи HTTPS-URL.
+- **Отдельное Mini App (даёт `t.me`-ссылку):** `/newapp` → выбери бота → заполни → укажи Web App URL.
+
+(Бэкенд перезапусти, чтобы он увидел новый `TELEGRAM_WEBAPP_URL`.)
+
+### Шаг 6. Открыть и проверить
+
+1. Открой своего бота в Telegram → `/start` → придёт приветствие с кнопкой
+   «Открыть superMen» ([10 §6](./10-telegram-mini-app.md#6-входящие-апдейты-бота)).
+2. Нажми кнопку-меню / кнопку из сообщения → Mini App открывается **внутри Telegram**.
+3. Сервер валидирует `initData` (HMAC-SHA256 + `auth_date`) и заводит/находит пользователя —
+   ты сразу на главном экране (без логина).
+4. Сделай чек-ин → проверь начисление XP/золота/анимацию; назавтра придёт daily report
+   (для нотификаций бэкенд с токеном должен быть запущен; пользователь должен был нажать `/start`).
 
 Чек-лист запуска TMA целиком — [10 §8](./10-telegram-mini-app.md#8-чек-лист-запуска-tma).
+
+### Промежуточная проверка без Telegram (опционально)
+
+Перед туннелем убедись, что фронт жив локально: открой `http://localhost:5173` в браузере —
+в dev-режиме клиент пойдёт по `X-Device-Id`, и петля чек-ина должна работать.
+
+### 4.6 Путь в прод (когда базовый функционал подтверждён)
+
+Для постоянного хостинга (не туннель):
+- собрать статику фронта `make web-build` (`web/dist`) и раздавать её + `/api` с **одного
+  origin** через reverse-proxy (nginx/caddy, TLS) — тогда относительный `/api/v1` работает
+  без прокси Vite ([07 §6](./07-architecture.md#6-деплой-замысел));
+- *(follow-up)* добавить раздачу `web/dist` самим бэкендом (`embed` + `http.FileServer`),
+  чтобы был один бинарник без отдельного веб-сервера;
+- подключить **pgx-драйвер** для Postgres (blank-import `github.com/jackc/pgx/v5/stdlib`
+  в `main.go`), иначе `sql.Open("pgx", …)` не резолвится — см. комментарии в
+  `internal/store/postgres/postgres.go` и `main.go`.
 
 ---
 

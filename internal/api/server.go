@@ -198,7 +198,8 @@ func (s *Server) handleActivities(w http.ResponseWriter, r *http.Request) {
 	if acts == nil {
 		acts = []domain.Activity{}
 	}
-	s.writeJSON(w, http.StatusOK, ActivitiesResponse{Activities: acts})
+	// Bare array — the client consumes a flat list (docs/09, src/types/api.ts).
+	s.writeJSON(w, http.StatusOK, acts)
 }
 
 // handleQuests serves GET /api/v1/quests (docs/09 §3): active quests with the
@@ -286,7 +287,7 @@ func (s *Server) handleAchievements(w http.ResponseWriter, r *http.Request) {
 	if achs == nil {
 		achs = []domain.AchievementWithState{}
 	}
-	s.writeJSON(w, http.StatusOK, AchievementsResponse{Achievements: achs})
+	s.writeJSON(w, http.StatusOK, achs)
 }
 
 // handleShop serves GET /api/v1/shop: the shop catalog.
@@ -299,7 +300,7 @@ func (s *Server) handleShop(w http.ResponseWriter, r *http.Request) {
 	if items == nil {
 		items = []domain.ShopItem{}
 	}
-	s.writeJSON(w, http.StatusOK, ShopResponse{Items: items})
+	s.writeJSON(w, http.StatusOK, items)
 }
 
 // handleBuy serves POST /api/v1/shop/{itemId}/buy (docs/09 §3): debits gold and
@@ -350,7 +351,7 @@ func (s *Server) handleInventory(w http.ResponseWriter, r *http.Request) {
 	if items == nil {
 		items = []domain.InventoryItem{}
 	}
-	s.writeJSON(w, http.StatusOK, InventoryResponse{Items: items})
+	s.writeJSON(w, http.StatusOK, items)
 }
 
 // handleEquip serves POST /api/v1/inventory/{id}/equip (docs/09 §3): equips an

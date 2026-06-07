@@ -21,6 +21,10 @@ import (
 	"superMen/internal/store/memory"
 	"superMen/internal/store/postgres"
 	"superMen/internal/telegram"
+
+	// Register the pgx stdlib driver so sql.Open("pgx", ...) resolves when
+	// DATABASE_URL is set (Postgres mode). Memory mode does not touch this.
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -30,14 +34,19 @@ func main() {
 	// Select the store: in-memory by default, Postgres when DATABASE_URL is set.
 	var st store.Store
 	if cfg.DatabaseURL != "" {
-		// NOTE: register the pgx stdlib driver on deploy (blank import) so that
-		// sql.Open("pgx", ...) resolves. The skeleton keeps the driver out of
-		// the build; this open will fail until the driver is wired in.
 		db, err := sql.Open("pgx", cfg.DatabaseURL)
 		if err != nil {
 			log.Fatalf("open database: %v", err)
 		}
 		defer db.Close()
+		// Fail fast with a clear message if the DB is unreachable, instead of
+		// erroring on every request later.
+		pingCtx, cancelPing := context.WithTimeout(context.Background(), 5*time.Second)
+		if err := db.PingContext(pingCtx); err != nil {
+			cancelPing()
+			log.Fatalf("ping database (%s): %v", cfg.DatabaseURL, err)
+		}
+		cancelPing()
 		st = postgres.NewStore(db)
 		log.Printf("store: postgres")
 	} else {
