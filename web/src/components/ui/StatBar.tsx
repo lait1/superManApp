@@ -6,6 +6,7 @@
 
 import type { CSSProperties } from 'react';
 import type { StatKey } from '../../types/api';
+import { STAT_LABELS } from '../reward/labels';
 import { ProgressBar } from './ProgressBar';
 
 export interface StatBarProps {
@@ -44,13 +45,14 @@ export function StatBar({ statKey, intoLevel, toNext, level, style }: StatBarPro
         {meta.icon}
       </span>
       <span
+        title={STAT_LABELS[statKey].label}
         style={{
           fontSize: 'var(--text-sm)',
           fontWeight: 'var(--weight-bold)' as unknown as number,
           color: 'var(--tg-hint)',
         }}
       >
-        {statKey}
+        {STAT_LABELS[statKey].short}
       </span>
       <ProgressBar value={intoLevel} max={max} color={meta.color} height={8} />
       <span
@@ -60,7 +62,7 @@ export function StatBar({ statKey, intoLevel, toNext, level, style }: StatBarPro
           whiteSpace: 'nowrap',
         }}
       >
-        LVL {level}
+        УР. {level}
       </span>
     </div>
   );

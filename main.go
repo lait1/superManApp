@@ -47,11 +47,18 @@ func main() {
 			log.Fatalf("ping database (%s): %v", cfg.DatabaseURL, err)
 		}
 		cancelPing()
-		st = postgres.NewStore(db)
+		pg := postgres.NewStore(db)
+		pg.StartingGold = cfg.StartingGold
+		st = pg
 		log.Printf("store: postgres")
 	} else {
-		st = memory.New()
+		mem := memory.New()
+		mem.StartingGold = cfg.StartingGold
+		st = mem
 		log.Printf("store: memory")
+	}
+	if cfg.StartingGold > 0 {
+		log.Printf("new characters start with %d gold (STARTING_GOLD)", cfg.StartingGold)
 	}
 
 	engine := game.New(st, balance)

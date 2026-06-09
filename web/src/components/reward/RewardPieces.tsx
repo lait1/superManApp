@@ -20,7 +20,7 @@ import { motion } from 'framer-motion';
 import type { CSSProperties } from 'react';
 import type { Drop, LevelTransition, Reward } from '../../types/api';
 import { Confetti } from './Confetti';
-import { RANK_META, RARITY_META, SLOT_LABEL } from './labels';
+import { RANK_META, RARITY_META, SLOT_LABEL, STAT_LABELS } from './labels';
 import { useReducedMotion } from './useReducedMotion';
 import type { Rank } from '../../types/api';
 
@@ -78,7 +78,7 @@ export function XpGoldBadge({ reward }: XpGoldBadgeProps) {
       >
         <span>💰 +{reward.gold}</span>
         <span style={{ color: 'var(--tg-hint)' }}>
-          {reward.statKey} +{reward.statPoints}
+          {STAT_LABELS[reward.statKey].short} +{reward.statPoints}
         </span>
       </div>
       {reward.capped && (

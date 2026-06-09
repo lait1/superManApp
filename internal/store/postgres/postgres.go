@@ -26,6 +26,10 @@ import (
 
 // Store is a PostgreSQL-backed implementation of store.Store.
 type Store struct {
+	// StartingGold is granted to newly created characters (dev/shop testing).
+	// Set it right after NewStore(), before serving requests.
+	StartingGold int64
+
 	db *sql.DB
 }
 
@@ -113,7 +117,7 @@ func (s *Store) GetOrCreateUserByTelegramID(ctx context.Context, telegramUserID 
 		telegramUserID, username, prefs).Scan(&userID); err != nil {
 		return nil, err
 	}
-	if err := createCharacterTx(ctx, tx, userID); err != nil {
+	if err := createCharacterTx(ctx, tx, userID, s.StartingGold); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -153,7 +157,7 @@ func (s *Store) GetOrCreateUserByDeviceID(ctx context.Context, deviceID string) 
 		deviceID, prefs).Scan(&userID); err != nil {
 		return nil, err
 	}
-	if err := createCharacterTx(ctx, tx, userID); err != nil {
+	if err := createCharacterTx(ctx, tx, userID, s.StartingGold); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -182,11 +186,15 @@ func defaultNotifPrefs() domain.NotifPrefs {
 
 // createCharacterTx inserts a character row and the 5 stat rows for a user
 // inside the given transaction.
-func createCharacterTx(ctx context.Context, tx *sql.Tx, userID int64) error {
+func createCharacterTx(ctx context.Context, tx *sql.Tx, userID, startingGold int64) error {
 	var charID int64
+	defaultAppearance, err := json.Marshal(domain.DefaultAppearance())
+	if err != nil {
+		return err
+	}
 	if err := tx.QueryRowContext(ctx,
-		`INSERT INTO characters (user_id, name, equipped)
-		 VALUES ($1, 'superMen', '{}') RETURNING id`, userID).Scan(&charID); err != nil {
+		`INSERT INTO characters (user_id, name, gold, equipped, appearance, onboarded)
+		 VALUES ($1, 'superMen', $2, '{}', $3, FALSE) RETURNING id`, userID, startingGold, defaultAppearance).Scan(&charID); err != nil {
 		return err
 	}
 	for _, k := range domain.AllStatKeys {
@@ -240,7 +248,7 @@ func scanUser(row rowScanner) (*domain.User, error) {
 
 func (s *Store) GetCharacter(ctx context.Context, userID int64) (*domain.Character, error) {
 	ch, err := scanCharacter(s.db.QueryRowContext(ctx,
-		`SELECT id, user_id, name, level, xp_total, gold, class, rank, streak_days, best_streak, last_checkin_date, equipped
+		`SELECT id, user_id, name, level, xp_total, gold, class, rank, streak_days, best_streak, last_checkin_date, equipped, appearance, onboarded
 		   FROM characters WHERE user_id = $1`, userID))
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, store.ErrNotFound
@@ -248,15 +256,17 @@ func (s *Store) GetCharacter(ctx context.Context, userID int64) (*domain.Charact
 	return ch, err
 }
 
-// scanCharacter scans a characters row, decoding the equipped JSONB.
+// scanCharacter scans a characters row, decoding the equipped/appearance JSONB.
 func scanCharacter(row rowScanner) (*domain.Character, error) {
 	var (
-		ch       domain.Character
-		lastDate sql.NullTime
-		equipped []byte
+		ch         domain.Character
+		lastDate   sql.NullTime
+		equipped   []byte
+		appearance []byte
 	)
 	if err := row.Scan(&ch.ID, &ch.UserID, &ch.Name, &ch.Level, &ch.XPTotal, &ch.Gold,
-		&ch.Class, &ch.Rank, &ch.StreakDays, &ch.BestStreak, &lastDate, &equipped); err != nil {
+		&ch.Class, &ch.Rank, &ch.StreakDays, &ch.BestStreak, &lastDate, &equipped,
+		&appearance, &ch.Onboarded); err != nil {
 		return nil, err
 	}
 	if lastDate.Valid {
@@ -267,11 +277,19 @@ func scanCharacter(row rowScanner) (*domain.Character, error) {
 	if err := unmarshalJSON(equipped, &ch.Equipped); err != nil {
 		return nil, err
 	}
+	ch.Appearance = domain.DefaultAppearance()
+	if err := unmarshalJSON(appearance, &ch.Appearance); err != nil {
+		return nil, err
+	}
 	return &ch, nil
 }
 
 func (s *Store) SaveCharacter(ctx context.Context, ch *domain.Character) error {
 	equipped, err := marshalJSON(ch.Equipped)
+	if err != nil {
+		return err
+	}
+	appearance, err := marshalJSON(ch.Appearance)
 	if err != nil {
 		return err
 	}
@@ -281,10 +299,11 @@ func (s *Store) SaveCharacter(ctx context.Context, ch *domain.Character) error {
 	}
 	res, err := s.db.ExecContext(ctx,
 		`UPDATE characters SET name=$2, level=$3, xp_total=$4, gold=$5, class=$6, rank=$7,
-		        streak_days=$8, best_streak=$9, last_checkin_date=$10, equipped=$11
+		        streak_days=$8, best_streak=$9, last_checkin_date=$10, equipped=$11,
+		        appearance=$12, onboarded=$13
 		 WHERE id=$1`,
 		ch.ID, ch.Name, ch.Level, ch.XPTotal, ch.Gold, ch.Class, ch.Rank,
-		ch.StreakDays, ch.BestStreak, lastDate, equipped)
+		ch.StreakDays, ch.BestStreak, lastDate, equipped, appearance, ch.Onboarded)
 	if err != nil {
 		return err
 	}
@@ -813,7 +832,7 @@ func (s *Store) AddTransaction(ctx context.Context, tx *domain.Transaction) erro
 
 func (s *Store) GetReportToday(ctx context.Context, characterID int64, localDate time.Time) (*domain.DailyReportView, error) {
 	ch, err := scanCharacter(s.db.QueryRowContext(ctx,
-		`SELECT id, user_id, name, level, xp_total, gold, class, rank, streak_days, best_streak, last_checkin_date, equipped
+		`SELECT id, user_id, name, level, xp_total, gold, class, rank, streak_days, best_streak, last_checkin_date, equipped, appearance, onboarded
 		   FROM characters WHERE id = $1`, characterID))
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, store.ErrNotFound

@@ -19,6 +19,7 @@ import { useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import { Button, Panel, PixelFrame, ProgressBar, StatBar } from '../../components/ui';
 import { CharacterCanvas } from '../../character/CharacterCanvas';
+import { useEquippedItems } from '../../character/useEquippedItems';
 import { RewardOverlay } from '../../components/reward';
 import { CLASS_META, RANK_META } from '../../components/reward/labels';
 import { useMe } from '../../lib/query';
@@ -44,6 +45,8 @@ export default function HeroScreen() {
   const { data, isLoading, isError, error, refetch } = useMe();
   const setCharacter = useStore((s) => s.setCharacter);
   const openCheckin = useStore((s) => s.openCheckin);
+  // Slot → catalog item id, so worn gear actually shows on the paper-doll.
+  const equippedItems = useEquippedItems(data?.character);
 
   // Mirror the freshest character snapshot into the store for the TabBar/overlay.
   useEffect(() => {
@@ -144,8 +147,8 @@ export default function HeroScreen() {
       <PixelFrame style={{ padding: 'var(--space-4)', alignSelf: 'center', width: '100%' }}>
         <CharacterCanvas
           scale={3}
-          characterClass={character.class}
-          rank={character.rank}
+          character={character}
+          overrides={{ equippedItems }}
         />
       </PixelFrame>
 

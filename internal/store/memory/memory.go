@@ -20,6 +20,10 @@ import (
 // Store is an in-memory implementation of store.Store, suitable for dev, the
 // offline demo and tests. The mutex guards every map below.
 type Store struct {
+	// StartingGold is granted to newly created characters (dev/shop testing).
+	// Set it right after New(), before serving requests.
+	StartingGold int64
+
 	mu sync.RWMutex
 
 	// id sequences (BIGSERIAL emulation)
@@ -120,12 +124,14 @@ func (s *Store) createCharacterLocked(userID int64) *domain.Character {
 		Name:       "superMen",
 		Level:      1,
 		XPTotal:    0,
-		Gold:       0,
+		Gold:       s.StartingGold,
 		Class:      "adventurer",
 		Rank:       "recruit",
 		StreakDays: 0,
 		BestStreak: 0,
 		Equipped:   map[string]int64{},
+		Appearance: domain.DefaultAppearance(),
+		Onboarded:  false,
 	}
 	s.characters[id] = ch
 	s.charByUser[userID] = id
@@ -281,6 +287,8 @@ func (s *Store) SaveCharacter(ctx context.Context, ch *domain.Character) error {
 	cur.Rank = ch.Rank
 	cur.StreakDays = ch.StreakDays
 	cur.BestStreak = ch.BestStreak
+	cur.Appearance = ch.Appearance
+	cur.Onboarded = ch.Onboarded
 	if ch.LastCheckinDate != nil {
 		d := *ch.LastCheckinDate
 		cur.LastCheckinDate = &d

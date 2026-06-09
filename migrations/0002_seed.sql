@@ -145,7 +145,8 @@ INSERT INTO achievements (id, title, description, category, condition, reward, i
 ON CONFLICT (id) DO NOTHING;
 
 -- ----------------------------------------------------------------------------
--- shop_items — КАНОН: internal/store/memory/seed.go (seedShopItems, 7 шт)
+-- shop_items — КАНОН: internal/store/memory/seed.go (seedShopItems; здесь
+-- исходные 7 позиций, остальной каталог добавляет 0004_shop_items.sql)
 --   slot: weapon|armor|amulet|aura|background|consumable
 --   rarity: common..legendary
 --   price NULL + purchasable=false → только дроп/квест (легендарки)

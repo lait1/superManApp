@@ -12,7 +12,13 @@
  */
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import type { CharacterClass, EquipSlot, Rarity, Rank } from '../types/api';
+import type {
+  CharacterAppearance,
+  CharacterClass,
+  EquipSlot,
+  Rarity,
+  Rank,
+} from '../types/api';
 
 /** Public base path for all generated character assets. */
 export const CHARACTER_ASSET_BASE = '/assets/character';
@@ -53,8 +59,16 @@ export type StageFileMap = Record<string, string>;
 /** Class → file name (scenes). */
 export type ClassFileMap = Partial<Record<CharacterClass, string>>;
 
-/** Class → stage → file name (bodies). */
-export type BodyFileMap = Partial<Record<CharacterClass, StageFileMap>>;
+/** bodyType → stage → skinTone → file name (skin layer). */
+export type SkinFileMap = Record<string, Record<string, Record<string, string>>>;
+
+/** Class → stage → bodyType → file name (outfit layer). */
+export type OutfitFileMap = Partial<
+  Record<CharacterClass, Record<string, Record<string, string>>>
+>;
+
+/** Hairstyle → hairColor → file name. "bald" has no entry. */
+export type HairFileMap = Record<string, Record<string, string>>;
 
 /** The full manifest.json shape, matching the genassets contract exactly. */
 export interface CharacterManifest {
@@ -67,9 +81,23 @@ export interface CharacterManifest {
   rankStages: number[];
   /** Stage number (as string) → rank name. */
   ranks: Record<string, Rank>;
-  bodies: BodyFileMap;
+  /** Appearance axes (onboarding customization). */
+  bodyTypes: string[];
+  skinTones: string[];
+  hairstyles: string[];
+  hairColors: string[];
+  /** Appearance used before onboarding / for missing fields. */
+  defaults: CharacterAppearance;
+  skins: SkinFileMap;
+  outfits: OutfitFileMap;
+  hair: HairFileMap;
+  /** skinTone → eyelid overlay for the idle blink (docs/12 §10). */
+  blinks: Record<string, string>;
   scenes: ClassFileMap;
+  /** Soft back glow per stage (z auraBack). */
   auras: StageFileMap;
+  /** Sparks drawn over the figure per stage (z auraFront). */
+  aurasFront: StageFileMap;
   frames: StageFileMap;
   items: ManifestItem[];
 }
@@ -115,15 +143,64 @@ export function rankToStage(rank: Rank, manifest: CharacterManifest): number {
   return manifest.rankStages[0] ?? 1;
 }
 
-/** Resolve the body sprite file for a class + stage, with sensible fallbacks. */
-export function resolveBodyFile(
+/**
+ * Normalize a (possibly partial / stale) appearance against the manifest:
+ * unknown ids fall back to the manifest defaults.
+ */
+export function resolveAppearance(
+  manifest: CharacterManifest,
+  appearance: Partial<CharacterAppearance> | undefined | null,
+): CharacterAppearance {
+  const d = manifest.defaults;
+  const pick = (value: string | undefined, allowed: string[], fallback: string) =>
+    value && allowed.includes(value) ? value : fallback;
+  return {
+    bodyType: pick(appearance?.bodyType, manifest.bodyTypes, d.bodyType),
+    skinTone: pick(appearance?.skinTone, manifest.skinTones, d.skinTone),
+    hairstyle: pick(appearance?.hairstyle, manifest.hairstyles, d.hairstyle),
+    hairColor: pick(appearance?.hairColor, manifest.hairColors, d.hairColor),
+  };
+}
+
+/** Resolve the skin sprite (head/arms/legs) for bodyType + stage + skinTone. */
+export function resolveSkinFile(
+  manifest: CharacterManifest,
+  appearance: CharacterAppearance,
+  stage: number,
+): string | undefined {
+  const byStage = manifest.skins[appearance.bodyType];
+  if (!byStage) return undefined;
+  const byTone = byStage[String(stage)] ?? byStage[String(manifest.rankStages[0] ?? 1)];
+  return byTone?.[appearance.skinTone];
+}
+
+/** Resolve the outfit sprite for a class + stage + bodyType. */
+export function resolveOutfitFile(
   manifest: CharacterManifest,
   cls: CharacterClass,
   stage: number,
+  appearance: CharacterAppearance,
 ): string | undefined {
-  const byStage = manifest.bodies[cls];
+  const byStage = manifest.outfits[cls];
   if (!byStage) return undefined;
-  return byStage[String(stage)] ?? byStage[String(manifest.rankStages[0] ?? 1)];
+  const byType = byStage[String(stage)] ?? byStage[String(manifest.rankStages[0] ?? 1)];
+  return byType?.[appearance.bodyType];
+}
+
+/** Resolve the hair sprite for a hairstyle + color ("bald" → none). */
+export function resolveHairFile(
+  manifest: CharacterManifest,
+  appearance: CharacterAppearance,
+): string | undefined {
+  return manifest.hair[appearance.hairstyle]?.[appearance.hairColor];
+}
+
+/** Resolve the eyelid overlay for the idle blink. */
+export function resolveBlinkFile(
+  manifest: CharacterManifest,
+  appearance: CharacterAppearance,
+): string | undefined {
+  return manifest.blinks?.[appearance.skinTone];
 }
 
 /** Resolve the scene (background) file for a class. */
@@ -134,9 +211,17 @@ export function resolveSceneFile(
   return manifest.scenes[cls];
 }
 
-/** Resolve the aura file for a stage. */
+/** Resolve the back-glow aura file for a stage. */
 export function resolveAuraFile(manifest: CharacterManifest, stage: number): string | undefined {
   return manifest.auras[String(stage)];
+}
+
+/** Resolve the front sparks aura file for a stage. */
+export function resolveAuraFrontFile(
+  manifest: CharacterManifest,
+  stage: number,
+): string | undefined {
+  return manifest.aurasFront?.[String(stage)] ?? manifest.auras[String(stage)];
 }
 
 /** Resolve the frame file for a stage. */

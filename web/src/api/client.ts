@@ -16,6 +16,8 @@ import type {
   AchievementsResponse,
   ApiError,
   BuyResponse,
+  CharacterSetupRequest,
+  CharacterSetupResponse,
   CheckinRequest,
   EquipResponse,
   ErrorResponse,
@@ -161,6 +163,18 @@ export const api = {
   /** GET /me — character + stats + gold + streak. */
   getMe(signal?: AbortSignal): Promise<MeResponse> {
     return request<MeResponse>('/me', { signal });
+  },
+
+  /** POST /character/setup — onboarding: name the hero, pick an appearance. */
+  setupCharacter(
+    body: CharacterSetupRequest,
+    signal?: AbortSignal,
+  ): Promise<CharacterSetupResponse> {
+    return request<CharacterSetupResponse>('/character/setup', {
+      method: 'POST',
+      body,
+      signal,
+    });
   },
 
   /** POST /checkin — log an activity, returns the reward event. */

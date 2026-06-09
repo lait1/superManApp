@@ -30,22 +30,30 @@ func (g *generator) drawScene(c *canvas, class string) {
 	mid := ramp[toneBase]
 	low := ramp[toneLight]
 
+	// Quantized vertical gradient with ordered dithering at the band seams —
+	// the classic pixel-art sky (no per-block noise grid).
+	stops := []color.RGBA{
+		top,
+		lerpColor(top, mid, 0.5),
+		mid,
+		lerpColor(mid, low, 0.33),
+		lerpColor(mid, low, 0.66),
+		low,
+	}
 	for by := 0; by < canvasH; by += block {
 		for bx := 0; bx < canvasW; bx += block {
 			frac := float64(by) / float64(canvasH) // 0 top .. 1 bottom
-			var base color.RGBA
-			if frac < 0.5 {
-				base = lerpColor(top, mid, frac*2)
-			} else {
-				base = lerpColor(mid, low, (frac-0.5)*2)
+			pos := frac * float64(len(stops)-1)
+			i := int(pos)
+			if i >= len(stops)-1 {
+				i = len(stops) - 2
 			}
-			// ordered dithering toward the next tone for soft banding
-			if bayer4(bx, by) > 12 {
-				base = lerpColor(base, low, 0.18)
-			} else if bayer4(bx, by) < 3 {
-				base = lerpColor(base, top, 0.18)
+			fr := pos - float64(i)
+			col := stops[i]
+			if fr > (float64(bayer4(bx, by))+0.5)/16.0 {
+				col = stops[i+1]
 			}
-			c.fillBlock(bx, by, withAlpha(base, 255))
+			c.fillBlock(bx, by, withAlpha(col, 255))
 		}
 	}
 
@@ -87,18 +95,31 @@ func (g *generator) drawScene(c *canvas, class string) {
 		for x := 0; x < canvasW; x += block * 4 {
 			c.rectBlocks(x, 0, x+block, block*10, sil) // hanging curtain folds
 		}
-	default: // adventurer: road / camp — winding path + tent
+	default: // adventurer: road / camp — winding path + tent + campfire
 		// path converging to horizon
 		for y := horizon; y > horizon-block*20; y -= block {
 			w := block*2 + (horizon-y)/2
 			c.rectBlocks(canvasW/2-w, y, canvasW/2+w, y+block, lerpColor(low, mid, 0.5))
 		}
-		// tent
+		// tent: lit left slope, shadowed right slope, dark door opening
 		tx := block * 6
-		for y := 0; y < block*8; y += block {
-			half := (block*8 - y) / 2
-			c.rectBlocks(tx-half, horizon-y-block*2, tx+half+block, horizon-y-block, sil)
+		rows := 7
+		apexY := horizon - rows*block
+		lit := lerpColor(low, ramp[toneHigh], 0.45) // clearly lighter than the backdrop
+		for k := 0; k < rows; k++ {
+			y := apexY + k*block
+			half := 2 + k*2
+			c.rectBlocks(tx-half, y, tx, y+block, lit)
+			c.rectBlocks(tx, y, tx+half, y+block, sil) // shadow side
 		}
+		c.rectBlocks(tx-block, horizon-block*3, tx+block, horizon, withAlpha(color.RGBA{R: 10, G: 8, B: 14, A: 255}, 255)) // door
+		c.fillBlock(tx-block, apexY-block, ramp[toneHigh])                                                                 // pennant
+		// campfire to the right of the tent
+		fx := tx + block*9
+		c.fillBlock(fx, horizon-block, ramp[toneHigh])
+		c.fillBlock(fx-block, horizon-block, ramp[toneLight])
+		c.fillBlock(fx, horizon-block*2, ramp[toneLight])
+		c.rectBlocks(fx-block*2, horizon, fx+block*2, horizon+block, sil) // logs
 	}
 
 	// vignette: darken the top corners a touch so the figure pops (dithered)

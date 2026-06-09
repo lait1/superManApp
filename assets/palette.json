@@ -21,6 +21,20 @@
     "bard":       { "_dominant": "CHA", "_theme": "purple-magenta", "shadow": "#4A1052", "base": "#9A1EA0", "light": "#D63CC8", "highlight": "#FFA0EE" },
     "adventurer": { "_dominant": "balance", "_theme": "orange-earthy", "shadow": "#4A2E12", "base": "#9A5E22", "light": "#D68A34", "highlight": "#F4C880" }
   },
+  "_skinTonesComment": "Onboarding skin-tone choices (palette-swap of the body layer). Keys match domain.SkinTones and the manifest.",
+  "skinTones": {
+    "s1": ["#9C6B53", "#E3B189", "#F1C9A5", "#FBE2C8"],
+    "s2": ["#7A4A33", "#B07A52", "#D8A878", "#F0D2A8"],
+    "s3": ["#5C3424", "#8A5638", "#B07A52", "#D2A380"],
+    "s4": ["#3E2218", "#5F3B2A", "#7A4E36", "#9A6A4A"]
+  },
+  "_hairColorsComment": "Onboarding hair-color choices (palette-swap of the hair layer). Keys match domain.HairColors and the manifest.",
+  "hairColors": {
+    "dark":  ["#14131A", "#2A2630", "#433D4D", "#5E5870"],
+    "brown": ["#3A2516", "#5C3A1E", "#8A5A2E", "#B98A52"],
+    "blond": ["#8A6420", "#C89A3C", "#E8C465", "#F8E6A0"],
+    "red":   ["#5A1410", "#A8281C", "#D6562C", "#F08A50"]
+  },
   "_rarityComment": "docs/04 §4 rarity -> tint; common grey ... legendary orange. [shadow, base, light, highlight].",
   "rarityColors": {
     "common":    ["#4A4A52", "#7A7A84", "#A8A8B2", "#D8D8E0"],

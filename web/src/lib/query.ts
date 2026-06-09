@@ -19,6 +19,8 @@ import type {
   ActivitiesResponse,
   AchievementsResponse,
   BuyResponse,
+  CharacterSetupRequest,
+  CharacterSetupResponse,
   CheckinRequest,
   EquipResponse,
   InventoryResponse,
@@ -118,6 +120,24 @@ export function useTodayReport(): UseQueryResult<TodayReport, ApiClientError> {
 // ──────────────────────────────────────────────────────────────────────────
 // Mutations
 // ──────────────────────────────────────────────────────────────────────────
+
+export function useSetupCharacter(): UseMutationResult<
+  CharacterSetupResponse,
+  ApiClientError,
+  CharacterSetupRequest
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CharacterSetupRequest) => api.setupCharacter(body),
+    onSuccess: (data) => {
+      // Patch the cached /me so the onboarding gate opens without a refetch.
+      qc.setQueryData<MeResponse>(queryKeys.me, (prev) =>
+        prev ? { ...prev, character: data.character } : prev,
+      );
+      void qc.invalidateQueries({ queryKey: queryKeys.me });
+    },
+  });
+}
 
 export function useCheckin(): UseMutationResult<
   RewardEvent,

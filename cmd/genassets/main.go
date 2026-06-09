@@ -65,10 +65,29 @@ var rankNames = map[int]string{
 	5: "legend",
 }
 
-// Layer z-order — docs/12 §5 / §12.
+// Appearance dimensions — the onboarding customization axes. Ids MUST match
+// domain.BodyTypes / SkinTones / Hairstyles / HairColors (backend validation).
+var (
+	bodyTypes  = []string{"a", "b"} // a = sturdy, b = slim
+	skinTones  = []string{"s1", "s2", "s3", "s4"}
+	hairstyles = []string{"bald", "short", "spiky", "long", "ponytail"} // bald emits no file
+	hairColors = []string{"dark", "brown", "blond", "red"}
+)
+
+// defaultAppearance mirrors domain.DefaultAppearance for the manifest.
+var defaultAppearance = map[string]string{
+	"bodyType":  "a",
+	"skinTone":  "s2",
+	"hairstyle": "short",
+	"hairColor": "dark",
+}
+
+// Layer z-order — docs/12 §5 / §12. The former monolithic "body" layer is
+// decomposed for customization: body (skin: head/arms/legs by bodyType ×
+// skinTone), outfit (class costume by stage), hair (style × color).
 var layerOrder = []string{
-	"scene", "auraBack", "back", "body", "boots", "armor",
-	"arms", "head", "headgear", "weapon", "amulet", "auraFront", "frame",
+	"scene", "auraBack", "back", "body", "outfit", "boots", "armor",
+	"arms", "head", "hair", "headgear", "weapon", "amulet", "auraFront", "frame",
 }
 
 func main() {
@@ -85,7 +104,10 @@ func main() {
 
 	g := &generator{dir: *outDir, pal: pal}
 
-	g.genBodies()
+	g.genSkins()
+	g.genBlinks()
+	g.genOutfits()
+	g.genHair()
 	g.genScenes()
 	g.genAuras()
 	g.genFrames()
@@ -102,9 +124,13 @@ type generator struct {
 	fileCount int
 
 	// collected for manifest
-	bodies map[string]map[string]string // class -> stage -> file
-	scenes map[string]string            // class -> file
-	auras  map[string]string            // stage -> file
-	frames map[string]string            // stage -> file
-	items  []ManifestItem
+	skins      map[string]map[string]map[string]string // bodyType -> stage -> tone -> file
+	blinks     map[string]string                       // skinTone -> eyelid overlay file
+	outfits    map[string]map[string]map[string]string // class -> stage -> bodyType -> file
+	hair       map[string]map[string]string            // style -> color -> file
+	scenes     map[string]string                       // class -> file
+	auras      map[string]string                       // stage -> back-glow file
+	aurasFront map[string]string                       // stage -> front sparks file
+	frames     map[string]string                       // stage -> file
+	items      []ManifestItem
 }

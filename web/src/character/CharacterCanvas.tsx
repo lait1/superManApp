@@ -28,10 +28,11 @@
  * without a server round-trip.
  */
 
-import { useMemo, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import type {
   Character,
+  CharacterAppearance,
   CharacterClass,
   EquipSlot,
   EquippedMap,
@@ -41,10 +42,15 @@ import {
   assetUrl,
   findItem,
   rankToStage,
+  resolveAppearance,
   resolveAuraFile,
-  resolveBodyFile,
+  resolveAuraFrontFile,
+  resolveBlinkFile,
   resolveFrameFile,
+  resolveHairFile,
+  resolveOutfitFile,
   resolveSceneFile,
+  resolveSkinFile,
   useCharacterAssets,
   type CharacterManifest,
 } from './useCharacterAssets';
@@ -62,10 +68,12 @@ export const SPRITE_HEIGHT = 192;
  */
 export type EquippedItemMap = Partial<Record<EquipSlot, string>>;
 
-/** Minimal character shape the renderer needs (class + rank + equip). */
+/** Minimal character shape the renderer needs (class + rank + look + equip). */
 export interface CharacterRenderInput {
   class: CharacterClass;
   rank: Rank;
+  /** Player-chosen look; missing/unknown fields fall back to manifest defaults. */
+  appearance?: Partial<CharacterAppearance>;
   /** Slot → catalog item id (string). Drives which item PNGs are drawn. */
   equippedItems?: EquippedItemMap;
 }
@@ -76,6 +84,7 @@ export interface CharacterOverrides {
   rank?: Rank;
   /** Explicit silhouette stage (1..5); wins over `rank` when set. */
   stage?: number;
+  appearance?: Partial<CharacterAppearance>;
   equippedItems?: EquippedItemMap;
 }
 
@@ -141,7 +150,12 @@ function Layer({ src, z }: { src: string; z: number }) {
 function resolveSpec(
   manifest: CharacterManifest,
   props: CharacterCanvasProps,
-): { cls: CharacterClass; stage: number; equipped: EquippedItemMap } {
+): {
+  cls: CharacterClass;
+  stage: number;
+  appearance: CharacterAppearance;
+  equipped: EquippedItemMap;
+} {
   const { character, overrides, characterClass, rank } = props;
 
   const baseClass: CharacterClass =
@@ -151,12 +165,17 @@ function resolveSpec(
 
   const stage = overrides?.stage ?? rankToStage(baseRank, manifest);
 
+  const appearance = resolveAppearance(manifest, {
+    ...(character?.appearance ?? {}),
+    ...(overrides?.appearance ?? {}),
+  });
+
   const equipped: EquippedItemMap = {
     ...resolveEquipped(character),
     ...(overrides?.equippedItems ?? {}),
   };
 
-  return { cls: baseClass, stage, equipped };
+  return { cls: baseClass, stage, appearance, equipped };
 }
 
 /**
@@ -179,6 +198,7 @@ function buildLayers(
   manifest: CharacterManifest,
   cls: CharacterClass,
   stage: number,
+  appearance: CharacterAppearance,
   equipped: EquippedItemMap,
 ): ResolvedLayer[] {
   const out: ResolvedLayer[] = [];
@@ -199,23 +219,39 @@ function buildLayers(
 
   for (const layer of manifest.layerOrder) {
     switch (layer) {
-      case 'scene':
-        push(layer, resolveSceneFile(manifest, cls));
+      case 'scene': {
+        // A purchased background (slot "background") replaces the class scene.
+        const bg = findItem(manifest, equipped.background);
+        push(layer, bg?.file ?? resolveSceneFile(manifest, cls));
         break;
-      case 'auraBack':
-      case 'auraFront':
+      }
+      case 'auraBack': {
         push(layer, resolveAuraFile(manifest, stage));
+        // Cosmetic aura-slot items (e.g. the Conquistador cape) hang behind
+        // the whole figure, between the glow and the back item.
+        const auraItem = findItem(manifest, equipped.aura);
+        push('auraItem', auraItem?.file);
+        break;
+      }
+      case 'auraFront':
+        push(layer, resolveAuraFrontFile(manifest, stage));
         break;
       case 'body':
-        push(layer, resolveBodyFile(manifest, cls, stage));
+        // Skin layer: head/face/arms/legs by bodyType × stage × skinTone.
+        push(layer, resolveSkinFile(manifest, appearance, stage));
+        break;
+      case 'outfit':
+        push(layer, resolveOutfitFile(manifest, cls, stage, appearance));
+        break;
+      case 'hair':
+        push(layer, resolveHairFile(manifest, appearance));
         break;
       case 'frame':
         push(layer, resolveFrameFile(manifest, stage));
         break;
       case 'arms':
       case 'head':
-        // Folded into the body sprite in the placeholder pipeline (docs/12 §11):
-        // no dedicated assets, nothing to draw.
+        // Folded into the skin sprite (docs/12 §11): nothing to draw.
         break;
       default: {
         const slot = slotForLayer[layer];
@@ -255,9 +291,44 @@ export function CharacterCanvas(props: CharacterCanvasProps) {
 
   const layers = useMemo(
     () =>
-      manifest && spec ? buildLayers(manifest, spec.cls, spec.stage, spec.equipped) : [],
+      manifest && spec
+        ? buildLayers(manifest, spec.cls, spec.stage, spec.appearance, spec.equipped)
+        : [],
     [manifest, spec],
   );
+
+  // Idle blink (docs/12 §10): flash the eyelid overlay for ~130ms every few
+  // seconds. Driven by a self-rescheduling timeout; off with reduced motion.
+  const blinkSrc =
+    manifest && spec ? resolveBlinkFile(manifest, spec.appearance) : undefined;
+  const blinkEnabled = animate && !reduceMotion && !!blinkSrc;
+  const [blinking, setBlinking] = useState(false);
+  useEffect(() => {
+    if (!blinkEnabled) return undefined;
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(() => {
+        if (!alive) return;
+        setBlinking(true);
+        timer = setTimeout(() => {
+          if (!alive) return;
+          setBlinking(false);
+          schedule();
+        }, 130);
+      }, 2600 + Math.random() * 2600);
+    };
+    schedule();
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      setBlinking(false);
+    };
+  }, [blinkEnabled]);
+
+  // The blink overlay sits directly above the skin ("body") layer; ties in
+  // zIndex resolve by DOM order, and the overlay is rendered after the stack.
+  const bodyZ = layers.findIndex((l) => l.key === 'body');
 
   const wrapperStyle: CSSProperties = {
     position: 'relative',
@@ -330,6 +401,10 @@ export function CharacterCanvas(props: CharacterCanvasProps) {
         {layers.map((layer, i) => (
           <Layer key={layer.key} src={layer.src} z={i} />
         ))}
+
+        {blinking && blinkSrc && bodyZ >= 0 && (
+          <Layer key="blink" src={assetUrl(blinkSrc)} z={bodyZ} />
+        )}
 
         {showParticles && (
           <ParticleField scale={intScale} count={spec.stage === 5 ? 10 : 6} />

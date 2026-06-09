@@ -19,6 +19,7 @@ import {
   useBuyItem,
   useEquipItem,
   useInventory,
+  useMe,
   useShop,
   useUnequipItem,
 } from '../../lib/query';
@@ -89,11 +90,15 @@ function ItemMeta({ name, color, sub }: { name: string; color: string; sub: stri
   );
 }
 
-function ShopRow({ item }: { item: ShopItem }) {
+function ShopRow({ item, ownedCount }: { item: ShopItem; ownedCount: number }) {
   const buy = useBuyItem();
   const color = RARITY_COLOR[item.rarity];
 
-  const canBuy = item.purchasable && item.price !== null;
+  // Gear/cosmetics are one-per-character: once owned the row shows «куплено»
+  // instead of the buy button (the backend allows duplicates; this guards the
+  // UI against accidental double-purchases). Consumables can be restocked.
+  const owned = ownedCount > 0 && item.slot !== 'consumable';
+  const canBuy = item.purchasable && item.price !== null && !owned;
   const lowGold = buy.isError && buy.error.code === 'insufficient_gold';
 
   function onBuy(): void {
@@ -115,13 +120,22 @@ function ShopRow({ item }: { item: ShopItem }) {
           sub={`${RARITY_LABEL[item.rarity]} · ${SLOT_LABEL[item.slot]}`}
         />
         <GoldBadge gold={item.price} />
-        {canBuy ? (
+        {owned ? (
+          <span style={{ color: 'var(--rarity-uncommon)', fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}>
+            ✓ куплено
+          </span>
+        ) : canBuy ? (
           <Button size="sm" onClick={onBuy} disabled={buy.isPending}>
             {buy.isPending ? '…' : 'Купить'}
           </Button>
         ) : (
           <span className="muted" style={{ fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}>
             за квест
+          </span>
+        )}
+        {item.slot === 'consumable' && ownedCount > 0 && (
+          <span className="muted" style={{ fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}>
+            ×{ownedCount}
           </span>
         )}
       </div>
@@ -203,11 +217,21 @@ function InventoryRow({ item }: { item: InventoryItem }) {
 
 function ShopList({ section }: { section: ShopSection }) {
   const { data, isPending, isError, error, refetch } = useShop();
+  // Inventory marks already-owned rows; invalidated on every purchase.
+  const { data: inventory } = useInventory();
 
   const items = useMemo<ShopItem[]>(() => {
     if (!data) return [];
     return data.filter((it) => slotSection(it.slot) === section);
   }, [data, section]);
+
+  const ownedCountById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const it of inventory ?? []) {
+      m.set(it.shopItemId, (m.get(it.shopItemId) ?? 0) + it.quantity);
+    }
+    return m;
+  }, [inventory]);
 
   if (isPending) return <LoadingState />;
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
@@ -218,7 +242,7 @@ function ShopList({ section }: { section: ShopSection }) {
     <div className="stack" style={{ gap: 'var(--space-3)' }}>
       <SectionHeader>{SECTION_TITLE[section]}</SectionHeader>
       {items.map((it) => (
-        <ShopRow key={it.id} item={it} />
+        <ShopRow key={it.id} item={it} ownedCount={ownedCountById.get(it.id) ?? 0} />
       ))}
     </div>
   );
@@ -243,7 +267,12 @@ function InventoryList() {
 
 export default function ShopScreen() {
   const [tab, setTab] = useState<ShopTab>('gear');
-  const gold = useStore((s) => s.character?.gold ?? null);
+  // Live balance: /me is invalidated by useBuyItem, so the badge updates right
+  // after a purchase. The store snapshot only refreshes on the Hero screen —
+  // keep it as a fallback while /me loads.
+  const { data: me } = useMe();
+  const storeGold = useStore((s) => s.character?.gold ?? null);
+  const gold = me?.character.gold ?? storeGold;
 
   return (
     <div className="stack" style={{ gap: 'var(--space-4)' }}>

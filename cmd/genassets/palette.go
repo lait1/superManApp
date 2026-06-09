@@ -33,6 +33,8 @@ type paletteJSON struct {
 	Neutrals     map[string][]string      `json:"neutrals"`
 	ClassRamps   map[string]classRampJSON `json:"classRamps"`
 	RarityColors map[string][]string      `json:"rarityColors"`
+	SkinTones    map[string][]string      `json:"skinTones"`
+	HairColors   map[string][]string      `json:"hairColors"`
 }
 
 // Palette is the resolved (parsed) palette used by the generator.
@@ -40,6 +42,8 @@ type Palette struct {
 	Neutrals   map[string]Ramp
 	ClassRamps map[string]Ramp
 	Rarity     map[string]Ramp
+	SkinTones  map[string]Ramp
+	HairColors map[string]Ramp
 
 	Outline      color.RGBA
 	ShadowGround color.RGBA
@@ -68,6 +72,20 @@ func (p Palette) rarity(name string) Ramp {
 	return p.Rarity["common"]
 }
 
+func (p Palette) skinTone(name string) Ramp {
+	if r, ok := p.SkinTones[name]; ok {
+		return r
+	}
+	return p.neutral("skin")
+}
+
+func (p Palette) hairColor(name string) Ramp {
+	if r, ok := p.HairColors[name]; ok {
+		return r
+	}
+	return p.neutral("leather")
+}
+
 // loadPalette reads palette.json; on any error it logs and returns the embedded
 // fallback so the generator is never blocked.
 func loadPalette(path string) Palette {
@@ -85,9 +103,17 @@ func loadPalette(path string) Palette {
 		Neutrals:   map[string]Ramp{},
 		ClassRamps: map[string]Ramp{},
 		Rarity:     map[string]Ramp{},
+		SkinTones:  map[string]Ramp{},
+		HairColors: map[string]Ramp{},
 	}
 	for name, hexes := range pj.Neutrals {
 		p.Neutrals[name] = rampFromHexes(hexes)
+	}
+	for name, hexes := range pj.SkinTones {
+		p.SkinTones[name] = rampFromHexes(hexes)
+	}
+	for name, hexes := range pj.HairColors {
+		p.HairColors[name] = rampFromHexes(hexes)
 	}
 	for class, r := range pj.ClassRamps {
 		p.ClassRamps[class] = Ramp{
@@ -120,6 +146,16 @@ func loadPalette(path string) Palette {
 	for name, r := range fb.Rarity {
 		if _, ok := p.Rarity[name]; !ok {
 			p.Rarity[name] = r
+		}
+	}
+	for name, r := range fb.SkinTones {
+		if _, ok := p.SkinTones[name]; !ok {
+			p.SkinTones[name] = r
+		}
+	}
+	for name, r := range fb.HairColors {
+		if _, ok := p.HairColors[name]; !ok {
+			p.HairColors[name] = r
 		}
 	}
 	if (p.Outline == color.RGBA{}) {
@@ -217,6 +253,18 @@ func embeddedPalette() Palette {
 			"rare":      mk("#163A78", "#2A66C8", "#4A92F0", "#AECCFF"),
 			"epic":      mk("#48166A", "#8A2EC8", "#B45CF0", "#E0AEFF"),
 			"legendary": mk("#7A3A08", "#D6741C", "#F4A030", "#FFE0A0"),
+		},
+		SkinTones: map[string]Ramp{
+			"s1": mk("#9C6B53", "#E3B189", "#F1C9A5", "#FBE2C8"),
+			"s2": mk("#7A4A33", "#B07A52", "#D8A878", "#F0D2A8"),
+			"s3": mk("#5C3424", "#8A5638", "#B07A52", "#D2A380"),
+			"s4": mk("#3E2218", "#5F3B2A", "#7A4E36", "#9A6A4A"),
+		},
+		HairColors: map[string]Ramp{
+			"dark":  mk("#14131A", "#2A2630", "#433D4D", "#5E5870"),
+			"brown": mk("#3A2516", "#5C3A1E", "#8A5A2E", "#B98A52"),
+			"blond": mk("#8A6420", "#C89A3C", "#E8C465", "#F8E6A0"),
+			"red":   mk("#5A1410", "#A8281C", "#D6562C", "#F08A50"),
 		},
 	}
 	p.Outline = mustHex("#14131A")

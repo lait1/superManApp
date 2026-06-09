@@ -5,9 +5,13 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"superMen/internal/config"
 	"superMen/internal/domain"
@@ -41,6 +45,7 @@ func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/v1/me", s.handleMe)
+	mux.HandleFunc("POST /api/v1/character/setup", s.handleCharacterSetup)
 	mux.HandleFunc("POST /api/v1/checkin", s.handleCheckin)
 	mux.HandleFunc("GET /api/v1/activities", s.handleActivities)
 	mux.HandleFunc("GET /api/v1/quests", s.handleQuests)
@@ -140,6 +145,72 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 		TodayCheckins: today,
 	}
 	s.writeJSON(w, http.StatusOK, resp)
+}
+
+// handleCharacterSetup serves POST /api/v1/character/setup: the onboarding
+// step where the user names the hero and picks an appearance. It can be called
+// again later to re-customize (idempotent over the same payload).
+func (s *Server) handleCharacterSetup(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	char, ok := CharacterFromContext(ctx)
+	if !ok {
+		s.writeError(w, http.StatusUnauthorized, "unauthorized", "no character")
+		return
+	}
+
+	var req CharacterSetupRequest
+	if err := s.decodeJSON(r, &req); err != nil {
+		s.writeError(w, http.StatusBadRequest, "bad_request", "invalid JSON body")
+		return
+	}
+
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		s.writeError(w, http.StatusBadRequest, "bad_request", "name is required")
+		return
+	}
+	if utf8.RuneCountInString(name) > maxCharacterNameLen {
+		s.writeError(w, http.StatusBadRequest, "bad_request",
+			fmt.Sprintf("name must be at most %d characters", maxCharacterNameLen))
+		return
+	}
+	if msg, ok := validateAppearance(req.Appearance); !ok {
+		s.writeError(w, http.StatusBadRequest, "bad_request", msg)
+		return
+	}
+
+	char.Name = name
+	char.Appearance = req.Appearance
+	char.Onboarded = true
+	if err := s.store.SaveCharacter(ctx, char); s.storeError(w, err) {
+		return
+	}
+
+	s.writeJSON(w, http.StatusOK, CharacterSetupResponse{OK: true, Character: s.characterDTO(char)})
+}
+
+// maxCharacterNameLen bounds the hero name (in runes) accepted by setup.
+const maxCharacterNameLen = 24
+
+// validateAppearance checks every appearance id against the allowed sets
+// (domain.BodyTypes etc. — the manifest contract).
+func validateAppearance(a domain.Appearance) (string, bool) {
+	checks := []struct {
+		value   string
+		allowed []string
+		field   string
+	}{
+		{a.BodyType, domain.BodyTypes, "bodyType"},
+		{a.SkinTone, domain.SkinTones, "skinTone"},
+		{a.Hairstyle, domain.Hairstyles, "hairstyle"},
+		{a.HairColor, domain.HairColors, "hairColor"},
+	}
+	for _, c := range checks {
+		if !slices.Contains(c.allowed, c.value) {
+			return fmt.Sprintf("invalid %s: %q", c.field, c.value), false
+		}
+	}
+	return "", true
 }
 
 // handleCheckin serves POST /api/v1/checkin (docs/09 §3): records a check-in via
@@ -348,10 +419,37 @@ func (s *Server) handleInventory(w http.ResponseWriter, r *http.Request) {
 	if s.storeError(w, err) {
 		return
 	}
-	if items == nil {
-		items = []domain.InventoryItem{}
+
+	// Join with the shop catalog so rows carry name/slot/rarity/icon, and
+	// flag the items currently worn (char.Equipped: slot → inventory id).
+	shop, err := s.store.ListShopItems(ctx)
+	if s.storeError(w, err) {
+		return
 	}
-	s.writeJSON(w, http.StatusOK, items)
+	shopByID := make(map[string]domain.ShopItem, len(shop))
+	for _, si := range shop {
+		shopByID[si.ID] = si
+	}
+
+	out := make([]InventoryItemDTO, 0, len(items))
+	for _, it := range items {
+		dto := InventoryItemDTO{
+			ID:          it.ID,
+			ShopItemID:  it.ShopItemID,
+			Name:        it.ShopItemID,
+			AcquiredVia: it.AcquiredVia,
+			Quantity:    it.Quantity,
+		}
+		if si, ok := shopByID[it.ShopItemID]; ok {
+			dto.Name = si.Name
+			dto.Slot = si.Slot
+			dto.Rarity = si.Rarity
+			dto.Icon = si.Icon
+			dto.Equipped = char.Equipped[si.Slot] == it.ID
+		}
+		out = append(out, dto)
+	}
+	s.writeJSON(w, http.StatusOK, out)
 }
 
 // handleEquip serves POST /api/v1/inventory/{id}/equip (docs/09 §3): equips an
@@ -493,6 +591,8 @@ func (s *Server) characterDTO(ch *domain.Character) CharacterDTO {
 		StreakDays:  ch.StreakDays,
 		StreakMult:  s.engine.StreakMult(ch.StreakDays),
 		Equipped:    equipped,
+		Appearance:  ch.Appearance,
+		Onboarded:   ch.Onboarded,
 	}
 }
 

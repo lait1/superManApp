@@ -40,6 +40,30 @@ type User struct {
 	LastSeenAt     *time.Time `json:"lastSeenAt,omitempty"`
 }
 
+// Appearance is the player-chosen visual customization of a character,
+// selected during onboarding (docs/12). Values reference ids from the
+// character asset manifest (bodyTypes / skinTones / hairstyles / hairColors).
+type Appearance struct {
+	BodyType  string `json:"bodyType"`
+	SkinTone  string `json:"skinTone"`
+	Hairstyle string `json:"hairstyle"`
+	HairColor string `json:"hairColor"`
+}
+
+// Allowed appearance ids — the validation source of truth, kept in sync with
+// the asset generator (cmd/genassets) and manifest.json.
+var (
+	BodyTypes  = []string{"a", "b"}
+	SkinTones  = []string{"s1", "s2", "s3", "s4"}
+	Hairstyles = []string{"bald", "short", "spiky", "long", "ponytail"}
+	HairColors = []string{"dark", "brown", "blond", "red"}
+)
+
+// DefaultAppearance is the look of a character before onboarding completes.
+func DefaultAppearance() Appearance {
+	return Appearance{BodyType: "a", SkinTone: "s2", Hairstyle: "short", HairColor: "dark"}
+}
+
 // Character mirrors the characters table (docs/08 §2).
 type Character struct {
 	ID              int64            `json:"id"`
@@ -54,6 +78,10 @@ type Character struct {
 	BestStreak      int              `json:"bestStreak"`
 	LastCheckinDate *time.Time       `json:"lastCheckinDate,omitempty"`
 	Equipped        map[string]int64 `json:"equipped"`
+	Appearance      Appearance       `json:"appearance"`
+	// Onboarded reports whether the user completed first-run onboarding
+	// (named the hero and picked an appearance).
+	Onboarded bool `json:"onboarded"`
 }
 
 // Stat mirrors a stats row (docs/08 §2). Value accumulates points; Level is the

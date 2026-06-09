@@ -4,6 +4,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -26,6 +27,10 @@ type Config struct {
 	Env string
 	// NotifyTick is how often the scheduler ticks (env NOTIFY_TICK, e.g. "5m").
 	NotifyTick time.Duration
+	// StartingGold is the gold balance given to newly created characters
+	// (env STARTING_GOLD). Defaults to 10000 in dev — enough to test the shop
+	// end-to-end — and 0 in prod.
+	StartingGold int64
 }
 
 // Load reads configuration from the environment, applying defaults.
@@ -41,6 +46,14 @@ func Load() Config {
 	if raw := os.Getenv("NOTIFY_TICK"); raw != "" {
 		if d, err := time.ParseDuration(raw); err == nil {
 			cfg.NotifyTick = d
+		}
+	}
+	if cfg.IsDev() {
+		cfg.StartingGold = 10000
+	}
+	if raw := os.Getenv("STARTING_GOLD"); raw != "" {
+		if v, err := strconv.ParseInt(raw, 10, 64); err == nil && v >= 0 {
+			cfg.StartingGold = v
 		}
 	}
 	return cfg

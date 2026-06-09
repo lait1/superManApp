@@ -49,6 +49,8 @@ export interface TelegramWebApp {
   viewportHeight: number;
   viewportStableHeight: number;
   HapticFeedback?: TelegramHapticFeedback;
+  version?: string;
+  isVersionAtLeast?(version: string): boolean;
   ready(): void;
   expand(): void;
   setHeaderColor?(color: string): void;
@@ -169,18 +171,31 @@ const NOTIFICATION_TYPES: ReadonlySet<string> = new Set<HapticNotificationType>(
  * Fire Telegram haptic feedback. Accepts impact styles (light/medium/heavy/
  * rigid/soft), notification types (error/success/warning) or 'selection'.
  * No-op outside Telegram.
+ *
+ * Haptics exist since Bot API 6.1; on older clients (e.g. Telegram Desktop
+ * reports 6.0) the official script logs an error and THROWS. Feedback is
+ * best-effort decoration — it must never break the calling flow, hence the
+ * version gate and the catch-all.
  */
 export function hapticFeedback(type: HapticType = 'medium'): void {
-  const haptic = getWebApp()?.HapticFeedback;
+  const wa = getWebApp();
+  const haptic = wa?.HapticFeedback;
   if (!haptic) return;
+  if (typeof wa?.isVersionAtLeast === 'function' && !wa.isVersionAtLeast('6.1')) {
+    return;
+  }
 
-  if (type === 'selection') {
-    haptic.selectionChanged();
-    return;
+  try {
+    if (type === 'selection') {
+      haptic.selectionChanged();
+      return;
+    }
+    if (NOTIFICATION_TYPES.has(type)) {
+      haptic.notificationOccurred(type as HapticNotificationType);
+      return;
+    }
+    haptic.impactOccurred(type as HapticImpactStyle);
+  } catch {
+    // best-effort: unsupported client — silently skip
   }
-  if (NOTIFICATION_TYPES.has(type)) {
-    haptic.notificationOccurred(type as HapticNotificationType);
-    return;
-  }
-  haptic.impactOccurred(type as HapticImpactStyle);
 }

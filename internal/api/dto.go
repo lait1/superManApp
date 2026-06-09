@@ -12,17 +12,32 @@ type MeResponse struct {
 
 // CharacterDTO is the character block of GET /me (docs/09 §3).
 type CharacterDTO struct {
-	Name        string           `json:"name"`
-	Level       int              `json:"level"`
-	XPTotal     int64            `json:"xpTotal"`
-	XPToNext    int64            `json:"xpToNext"`
-	XPIntoLevel int64            `json:"xpIntoLevel"`
-	Gold        int64            `json:"gold"`
-	Class       string           `json:"class"`
-	Rank        string           `json:"rank"`
-	StreakDays  int              `json:"streakDays"`
-	StreakMult  float64          `json:"streakMult"`
-	Equipped    map[string]int64 `json:"equipped"`
+	Name        string            `json:"name"`
+	Level       int               `json:"level"`
+	XPTotal     int64             `json:"xpTotal"`
+	XPToNext    int64             `json:"xpToNext"`
+	XPIntoLevel int64             `json:"xpIntoLevel"`
+	Gold        int64             `json:"gold"`
+	Class       string            `json:"class"`
+	Rank        string            `json:"rank"`
+	StreakDays  int               `json:"streakDays"`
+	StreakMult  float64           `json:"streakMult"`
+	Equipped    map[string]int64  `json:"equipped"`
+	Appearance  domain.Appearance `json:"appearance"`
+	Onboarded   bool              `json:"onboarded"`
+}
+
+// CharacterSetupRequest is the POST /api/v1/character/setup body: the
+// onboarding step where the user names the hero and picks an appearance.
+type CharacterSetupRequest struct {
+	Name       string            `json:"name"`
+	Appearance domain.Appearance `json:"appearance"`
+}
+
+// CharacterSetupResponse is the POST /api/v1/character/setup payload.
+type CharacterSetupResponse struct {
+	OK        bool         `json:"ok"`
+	Character CharacterDTO `json:"character"`
 }
 
 // StatDTO is one stat row of GET /me (docs/09 §3).
@@ -80,9 +95,19 @@ type BuyResponse struct {
 	InventoryItemID int64 `json:"inventoryItemId"`
 }
 
-// InventoryResponse is the GET /api/v1/inventory payload.
-type InventoryResponse struct {
-	Items []domain.InventoryItem `json:"items"`
+// InventoryItemDTO is one row of GET /api/v1/inventory: the inventory record
+// joined with its shop-catalog entry (name/slot/rarity/icon) plus the live
+// equipped state — exactly what the client inventory list renders.
+type InventoryItemDTO struct {
+	ID          int64  `json:"id"`
+	ShopItemID  string `json:"shopItemId"`
+	Name        string `json:"name"`
+	Slot        string `json:"slot"`
+	Rarity      string `json:"rarity"`
+	AcquiredVia string `json:"acquiredVia"`
+	Quantity    int    `json:"quantity"`
+	Icon        string `json:"icon,omitempty"`
+	Equipped    bool   `json:"equipped"`
 }
 
 // EquipResponse is the POST /api/v1/inventory/{id}/equip payload (docs/09 §3).

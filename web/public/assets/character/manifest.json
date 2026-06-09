@@ -28,10 +28,12 @@
     "auraBack",
     "back",
     "body",
+    "outfit",
     "boots",
     "armor",
     "arms",
     "head",
+    "hair",
     "headgear",
     "weapon",
     "amulet",
@@ -60,49 +62,266 @@
     "4": "master",
     "5": "legend"
   },
-  "bodies": {
+  "bodyTypes": [
+    "a",
+    "b"
+  ],
+  "skinTones": [
+    "s1",
+    "s2",
+    "s3",
+    "s4"
+  ],
+  "hairstyles": [
+    "bald",
+    "short",
+    "spiky",
+    "long",
+    "ponytail"
+  ],
+  "hairColors": [
+    "dark",
+    "brown",
+    "blond",
+    "red"
+  ],
+  "defaults": {
+    "bodyType": "a",
+    "hairColor": "dark",
+    "hairstyle": "short",
+    "skinTone": "s2"
+  },
+  "skins": {
+    "a": {
+      "1": {
+        "s1": "skin_a_r1_s1.png",
+        "s2": "skin_a_r1_s2.png",
+        "s3": "skin_a_r1_s3.png",
+        "s4": "skin_a_r1_s4.png"
+      },
+      "2": {
+        "s1": "skin_a_r2_s1.png",
+        "s2": "skin_a_r2_s2.png",
+        "s3": "skin_a_r2_s3.png",
+        "s4": "skin_a_r2_s4.png"
+      },
+      "3": {
+        "s1": "skin_a_r3_s1.png",
+        "s2": "skin_a_r3_s2.png",
+        "s3": "skin_a_r3_s3.png",
+        "s4": "skin_a_r3_s4.png"
+      },
+      "4": {
+        "s1": "skin_a_r4_s1.png",
+        "s2": "skin_a_r4_s2.png",
+        "s3": "skin_a_r4_s3.png",
+        "s4": "skin_a_r4_s4.png"
+      },
+      "5": {
+        "s1": "skin_a_r5_s1.png",
+        "s2": "skin_a_r5_s2.png",
+        "s3": "skin_a_r5_s3.png",
+        "s4": "skin_a_r5_s4.png"
+      }
+    },
+    "b": {
+      "1": {
+        "s1": "skin_b_r1_s1.png",
+        "s2": "skin_b_r1_s2.png",
+        "s3": "skin_b_r1_s3.png",
+        "s4": "skin_b_r1_s4.png"
+      },
+      "2": {
+        "s1": "skin_b_r2_s1.png",
+        "s2": "skin_b_r2_s2.png",
+        "s3": "skin_b_r2_s3.png",
+        "s4": "skin_b_r2_s4.png"
+      },
+      "3": {
+        "s1": "skin_b_r3_s1.png",
+        "s2": "skin_b_r3_s2.png",
+        "s3": "skin_b_r3_s3.png",
+        "s4": "skin_b_r3_s4.png"
+      },
+      "4": {
+        "s1": "skin_b_r4_s1.png",
+        "s2": "skin_b_r4_s2.png",
+        "s3": "skin_b_r4_s3.png",
+        "s4": "skin_b_r4_s4.png"
+      },
+      "5": {
+        "s1": "skin_b_r5_s1.png",
+        "s2": "skin_b_r5_s2.png",
+        "s3": "skin_b_r5_s3.png",
+        "s4": "skin_b_r5_s4.png"
+      }
+    }
+  },
+  "outfits": {
     "adventurer": {
-      "1": "body_adventurer_r1.png",
-      "2": "body_adventurer_r2.png",
-      "3": "body_adventurer_r3.png",
-      "4": "body_adventurer_r4.png",
-      "5": "body_adventurer_r5.png"
+      "1": {
+        "a": "outfit_adventurer_r1_a.png",
+        "b": "outfit_adventurer_r1_b.png"
+      },
+      "2": {
+        "a": "outfit_adventurer_r2_a.png",
+        "b": "outfit_adventurer_r2_b.png"
+      },
+      "3": {
+        "a": "outfit_adventurer_r3_a.png",
+        "b": "outfit_adventurer_r3_b.png"
+      },
+      "4": {
+        "a": "outfit_adventurer_r4_a.png",
+        "b": "outfit_adventurer_r4_b.png"
+      },
+      "5": {
+        "a": "outfit_adventurer_r5_a.png",
+        "b": "outfit_adventurer_r5_b.png"
+      }
     },
     "bard": {
-      "1": "body_bard_r1.png",
-      "2": "body_bard_r2.png",
-      "3": "body_bard_r3.png",
-      "4": "body_bard_r4.png",
-      "5": "body_bard_r5.png"
+      "1": {
+        "a": "outfit_bard_r1_a.png",
+        "b": "outfit_bard_r1_b.png"
+      },
+      "2": {
+        "a": "outfit_bard_r2_a.png",
+        "b": "outfit_bard_r2_b.png"
+      },
+      "3": {
+        "a": "outfit_bard_r3_a.png",
+        "b": "outfit_bard_r3_b.png"
+      },
+      "4": {
+        "a": "outfit_bard_r4_a.png",
+        "b": "outfit_bard_r4_b.png"
+      },
+      "5": {
+        "a": "outfit_bard_r5_a.png",
+        "b": "outfit_bard_r5_b.png"
+      }
     },
     "druid": {
-      "1": "body_druid_r1.png",
-      "2": "body_druid_r2.png",
-      "3": "body_druid_r3.png",
-      "4": "body_druid_r4.png",
-      "5": "body_druid_r5.png"
+      "1": {
+        "a": "outfit_druid_r1_a.png",
+        "b": "outfit_druid_r1_b.png"
+      },
+      "2": {
+        "a": "outfit_druid_r2_a.png",
+        "b": "outfit_druid_r2_b.png"
+      },
+      "3": {
+        "a": "outfit_druid_r3_a.png",
+        "b": "outfit_druid_r3_b.png"
+      },
+      "4": {
+        "a": "outfit_druid_r4_a.png",
+        "b": "outfit_druid_r4_b.png"
+      },
+      "5": {
+        "a": "outfit_druid_r5_a.png",
+        "b": "outfit_druid_r5_b.png"
+      }
     },
     "paladin": {
-      "1": "body_paladin_r1.png",
-      "2": "body_paladin_r2.png",
-      "3": "body_paladin_r3.png",
-      "4": "body_paladin_r4.png",
-      "5": "body_paladin_r5.png"
+      "1": {
+        "a": "outfit_paladin_r1_a.png",
+        "b": "outfit_paladin_r1_b.png"
+      },
+      "2": {
+        "a": "outfit_paladin_r2_a.png",
+        "b": "outfit_paladin_r2_b.png"
+      },
+      "3": {
+        "a": "outfit_paladin_r3_a.png",
+        "b": "outfit_paladin_r3_b.png"
+      },
+      "4": {
+        "a": "outfit_paladin_r4_a.png",
+        "b": "outfit_paladin_r4_b.png"
+      },
+      "5": {
+        "a": "outfit_paladin_r5_a.png",
+        "b": "outfit_paladin_r5_b.png"
+      }
     },
     "sage": {
-      "1": "body_sage_r1.png",
-      "2": "body_sage_r2.png",
-      "3": "body_sage_r3.png",
-      "4": "body_sage_r4.png",
-      "5": "body_sage_r5.png"
+      "1": {
+        "a": "outfit_sage_r1_a.png",
+        "b": "outfit_sage_r1_b.png"
+      },
+      "2": {
+        "a": "outfit_sage_r2_a.png",
+        "b": "outfit_sage_r2_b.png"
+      },
+      "3": {
+        "a": "outfit_sage_r3_a.png",
+        "b": "outfit_sage_r3_b.png"
+      },
+      "4": {
+        "a": "outfit_sage_r4_a.png",
+        "b": "outfit_sage_r4_b.png"
+      },
+      "5": {
+        "a": "outfit_sage_r5_a.png",
+        "b": "outfit_sage_r5_b.png"
+      }
     },
     "warrior": {
-      "1": "body_warrior_r1.png",
-      "2": "body_warrior_r2.png",
-      "3": "body_warrior_r3.png",
-      "4": "body_warrior_r4.png",
-      "5": "body_warrior_r5.png"
+      "1": {
+        "a": "outfit_warrior_r1_a.png",
+        "b": "outfit_warrior_r1_b.png"
+      },
+      "2": {
+        "a": "outfit_warrior_r2_a.png",
+        "b": "outfit_warrior_r2_b.png"
+      },
+      "3": {
+        "a": "outfit_warrior_r3_a.png",
+        "b": "outfit_warrior_r3_b.png"
+      },
+      "4": {
+        "a": "outfit_warrior_r4_a.png",
+        "b": "outfit_warrior_r4_b.png"
+      },
+      "5": {
+        "a": "outfit_warrior_r5_a.png",
+        "b": "outfit_warrior_r5_b.png"
+      }
     }
+  },
+  "hair": {
+    "long": {
+      "blond": "hair_long_blond.png",
+      "brown": "hair_long_brown.png",
+      "dark": "hair_long_dark.png",
+      "red": "hair_long_red.png"
+    },
+    "ponytail": {
+      "blond": "hair_ponytail_blond.png",
+      "brown": "hair_ponytail_brown.png",
+      "dark": "hair_ponytail_dark.png",
+      "red": "hair_ponytail_red.png"
+    },
+    "short": {
+      "blond": "hair_short_blond.png",
+      "brown": "hair_short_brown.png",
+      "dark": "hair_short_dark.png",
+      "red": "hair_short_red.png"
+    },
+    "spiky": {
+      "blond": "hair_spiky_blond.png",
+      "brown": "hair_spiky_brown.png",
+      "dark": "hair_spiky_dark.png",
+      "red": "hair_spiky_red.png"
+    }
+  },
+  "blinks": {
+    "s1": "blink_s1.png",
+    "s2": "blink_s2.png",
+    "s3": "blink_s3.png",
+    "s4": "blink_s4.png"
   },
   "scenes": {
     "adventurer": "scene_adventurer.png",
@@ -118,6 +337,13 @@
     "3": "aura_r3.png",
     "4": "aura_r4.png",
     "5": "aura_r5.png"
+  },
+  "aurasFront": {
+    "1": "aura_front_r1.png",
+    "2": "aura_front_r2.png",
+    "3": "aura_front_r3.png",
+    "4": "aura_front_r4.png",
+    "5": "aura_front_r5.png"
   },
   "frames": {
     "1": "frame_r1.png",
@@ -152,6 +378,12 @@
       "file": "item_vest_padded.png"
     },
     {
+      "id": "armor_vit",
+      "slot": "armor",
+      "rarity": "rare",
+      "file": "item_armor_vit.png"
+    },
+    {
       "id": "armor_titan",
       "slot": "armor",
       "rarity": "legendary",
@@ -164,16 +396,16 @@
       "file": "item_sword_short.png"
     },
     {
-      "id": "blade_focus",
-      "slot": "weapon",
-      "rarity": "epic",
-      "file": "item_blade_focus.png"
-    },
-    {
       "id": "staff_arcane",
       "slot": "weapon",
       "rarity": "rare",
       "file": "item_staff_arcane.png"
+    },
+    {
+      "id": "blade_focus",
+      "slot": "weapon",
+      "rarity": "epic",
+      "file": "item_blade_focus.png"
     },
     {
       "id": "amulet_owl",
@@ -200,6 +432,12 @@
       "file": "item_wings_phoenix.png"
     },
     {
+      "id": "legendary_cape_conquistador",
+      "slot": "aura",
+      "rarity": "legendary",
+      "file": "item_legendary_cape_conquistador.png"
+    },
+    {
       "id": "boots_leather",
       "slot": "boots",
       "rarity": "common",
@@ -210,6 +448,12 @@
       "slot": "boots",
       "rarity": "rare",
       "file": "item_boots_swift.png"
+    },
+    {
+      "id": "bg_neon_city",
+      "slot": "background",
+      "rarity": "uncommon",
+      "file": "item_bg_neon_city.png"
     }
   ]
 }

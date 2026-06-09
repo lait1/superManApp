@@ -95,6 +95,17 @@ export interface ErrorResponse {
 /** Slot → equipped inventory item id (numeric). Partial: only equipped slots. */
 export type EquippedMap = Partial<Record<EquipSlot, number>>;
 
+/**
+ * Player-chosen look, picked during onboarding. Ids reference the character
+ * asset manifest (bodyTypes / skinTones / hairstyles / hairColors).
+ */
+export interface CharacterAppearance {
+  bodyType: string;
+  skinTone: string;
+  hairstyle: string;
+  hairColor: string;
+}
+
 /** Character block of GET /me. */
 export interface Character {
   name: string;
@@ -108,6 +119,21 @@ export interface Character {
   streakDays: number;
   streakMult: number;
   equipped: EquippedMap;
+  appearance: CharacterAppearance;
+  /** false until first-run onboarding (name + appearance) completes. */
+  onboarded: boolean;
+}
+
+/** POST /character/setup request body (onboarding). */
+export interface CharacterSetupRequest {
+  name: string;
+  appearance: CharacterAppearance;
+}
+
+/** POST /character/setup response. */
+export interface CharacterSetupResponse {
+  ok: boolean;
+  character: Character;
 }
 
 /** A single stat row in GET /me. */

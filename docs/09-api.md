@@ -32,6 +32,7 @@ Authorization: tma <initData>
 | Метод | Путь | Назначение |
 |-------|------|-----------|
 | `GET`  | `/api/v1/me` | персонаж + статы + золото + стрик (главный экран) |
+| `POST` | `/api/v1/character/setup` | онбординг: имя героя + внешность (см. ниже) |
 | `POST` | `/api/v1/checkin` | отметить активность → вернуть reward event |
 | `GET`  | `/api/v1/activities` | каталог активностей |
 | `GET`  | `/api/v1/quests` | квесты с прогрессом (daily/weekly/chains) |
@@ -56,7 +57,9 @@ Authorization: tma <initData>
     "xpToNext": 9100, "xpIntoLevel": 6820,
     "gold": 6420, "class": "sage", "rank": "seeker",
     "streakDays": 12, "streakMult": 1.25,
-    "equipped": { "weapon": 1201, "amulet": 1188 }
+    "equipped": { "weapon": 1201, "amulet": 1188 },
+    "appearance": { "bodyType": "a", "skinTone": "s2", "hairstyle": "short", "hairColor": "dark" },
+    "onboarded": true
   },
   "stats": [
     { "key": "STR", "value": 540,  "level": 6,  "intoLevel": 120, "toNext": 360 },
@@ -68,6 +71,28 @@ Authorization: tma <initData>
   "todayCheckins": ["english", "gym"]
 }
 ```
+
+### POST /character/setup
+
+Онбординг (первый запуск): пользователь называет героя и выбирает внешность.
+Пока `character.onboarded == false`, клиент показывает экран создания персонажа
+вместо основной оболочки. Эндпоинт идемпотентен — можно вызывать повторно для
+смены образа.
+
+Запрос:
+```json
+{
+  "name": "Странник",
+  "appearance": { "bodyType": "b", "skinTone": "s3", "hairstyle": "ponytail", "hairColor": "red" }
+}
+```
+
+Допустимые значения (источник истины — `domain.BodyTypes` и манифест ассетов):
+`bodyType` ∈ `a|b`, `skinTone` ∈ `s1..s4`,
+`hairstyle` ∈ `bald|short|spiky|long|ponytail`, `hairColor` ∈ `dark|brown|blond|red`.
+Имя: 1–24 символа после trim. Неверные значения → `400 bad_request`.
+
+Ответ: `{ "ok": true, "character": { ...как в GET /me, "onboarded": true } }`.
 
 ### POST /checkin
 

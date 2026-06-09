@@ -26,18 +26,37 @@ type ManifestItem struct {
 }
 
 type Manifest struct {
-	Canvas     ManifestCanvas               `json:"canvas"`
-	Scale      int                          `json:"scale"`
-	Anchors    map[string]any               `json:"anchors"`
-	LayerOrder []string                     `json:"layerOrder"`
-	Classes    []string                     `json:"classes"`
-	RankStages []int                        `json:"rankStages"`
-	Ranks      map[string]string            `json:"ranks"`
-	Bodies     map[string]map[string]string `json:"bodies"`
-	Scenes     map[string]string            `json:"scenes"`
-	Auras      map[string]string            `json:"auras"`
-	Frames     map[string]string            `json:"frames"`
-	Items      []ManifestItem               `json:"items"`
+	Canvas     ManifestCanvas    `json:"canvas"`
+	Scale      int               `json:"scale"`
+	Anchors    map[string]any    `json:"anchors"`
+	LayerOrder []string          `json:"layerOrder"`
+	Classes    []string          `json:"classes"`
+	RankStages []int             `json:"rankStages"`
+	Ranks      map[string]string `json:"ranks"`
+
+	// Appearance axes + the look used before onboarding completes.
+	BodyTypes  []string          `json:"bodyTypes"`
+	SkinTones  []string          `json:"skinTones"`
+	Hairstyles []string          `json:"hairstyles"`
+	HairColors []string          `json:"hairColors"`
+	Defaults   map[string]string `json:"defaults"`
+
+	// Base layers: skin (bodyType → stage → tone), outfit (class → stage →
+	// bodyType) and hair (style → color). "bald" has no hair entry.
+	Skins   map[string]map[string]map[string]string `json:"skins"`
+	Outfits map[string]map[string]map[string]string `json:"outfits"`
+	Hair    map[string]map[string]string            `json:"hair"`
+	// Blinks: skinTone → eyelid overlay, flashed over the skin layer by the
+	// renderer for the idle blink (docs/12 §10).
+	Blinks map[string]string `json:"blinks"`
+
+	Scenes map[string]string `json:"scenes"`
+	// Auras is the soft back glow (z auraBack); AurasFront holds the sparks
+	// drawn over the figure (z auraFront) so the silhouette stays readable.
+	Auras      map[string]string `json:"auras"`
+	AurasFront map[string]string `json:"aurasFront"`
+	Frames     map[string]string `json:"frames"`
+	Items      []ManifestItem    `json:"items"`
 }
 
 func (g *generator) writeManifest() {
@@ -55,9 +74,18 @@ func (g *generator) writeManifest() {
 		Classes:    classes,
 		RankStages: rankStages,
 		Ranks:      ranksMap(),
-		Bodies:     g.bodies,
+		BodyTypes:  bodyTypes,
+		SkinTones:  skinTones,
+		Hairstyles: hairstyles,
+		HairColors: hairColors,
+		Defaults:   defaultAppearance,
+		Skins:      g.skins,
+		Outfits:    g.outfits,
+		Hair:       g.hair,
+		Blinks:     g.blinks,
 		Scenes:     g.scenes,
 		Auras:      g.auras,
+		AurasFront: g.aurasFront,
 		Frames:     g.frames,
 		Items:      g.items,
 	}

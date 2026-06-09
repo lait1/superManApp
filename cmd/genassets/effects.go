@@ -23,12 +23,20 @@ import (
 
 func (g *generator) genAuras() {
 	g.auras = map[string]string{}
+	g.aurasFront = map[string]string{}
 	for _, stage := range rankStages {
 		c := newCanvas()
 		g.drawAura(c, stage)
 		name := fmt.Sprintf("aura_r%d.png", stage)
 		g.writePNG(name, c)
 		g.auras[fmt.Sprintf("%d", stage)] = name
+
+		// front overlay: sparks/bursts only — never washes over the figure
+		cf := newCanvas()
+		g.drawAuraFront(cf, stage)
+		nameF := fmt.Sprintf("aura_front_r%d.png", stage)
+		g.writePNG(nameF, cf)
+		g.aurasFront[fmt.Sprintf("%d", stage)] = nameF
 	}
 }
 
@@ -75,28 +83,47 @@ func (g *generator) drawAura(c *canvas, stage int) {
 		}
 	}
 
-	// sparks / particles for stage >= 3 — deterministic positions around a ring
-	if stage >= 3 {
-		spark := color.RGBA{R: 255, G: 250, B: 230, A: 235}
-		n := 6 + (stage-3)*4 // 6, 10, 14
-		ringRx, ringRy := rx+block*2, ry+block*2
-		for i := 0; i < n; i++ {
-			// deterministic angle via integer table (no RNG, no math import)
-			ang := float64(i) / float64(n) * 6.2831853
-			sx := cx + int(float64(ringRx)*cosApprox(ang))
-			sy := cy + int(float64(ringRy)*sinApprox(ang))
-			c.fillBlock(snap(sx), snap(sy), spark)
-			if stage >= 4 {
-				// trailing particle stream pointing up
-				c.set(sx+1, sy-block, withAlpha(spark, 160))
-			}
+}
+
+// drawAuraFront paints the over-the-figure layer: sparks on a ring around the
+// silhouette and legend bursts. Deliberately NO filled glow here — the figure
+// must stay readable (the soft glow lives in the back aura only).
+func (g *generator) drawAuraFront(c *canvas, stage int) {
+	if stage < 3 {
+		return // recruit/seeker: nothing in front
+	}
+	cx := canvasW / 2
+	cy := anchorChestCenter.y
+
+	var rx, ry int
+	switch stage {
+	case 3:
+		rx, ry = 48, 76
+	case 4:
+		rx, ry = 56, 88
+	default: // 5
+		rx, ry = 60, 92
+	}
+
+	spark := color.RGBA{R: 255, G: 250, B: 230, A: 235}
+	n := 6 + (stage-3)*4 // 6, 10, 14
+	ringRx, ringRy := rx+block*2, ry+block*2
+	for i := 0; i < n; i++ {
+		// deterministic angle via integer table (no RNG, no math import)
+		ang := float64(i) / float64(n) * 6.2831853
+		sx := cx + int(float64(ringRx)*cosApprox(ang))
+		sy := cy + int(float64(ringRy)*sinApprox(ang))
+		c.fillBlock(snap(sx), snap(sy), spark)
+		if stage >= 4 {
+			// trailing particle stream pointing up
+			c.set(sx+1, sy-block, withAlpha(spark, 160))
 		}
 	}
 
-	// legend bursts: bright cross-flashes at the corners of the halo
+	// legend bursts: bright cross-flashes at the ring poles (kept off the head)
 	if stage >= 5 {
 		flash := color.RGBA{R: 255, G: 255, B: 245, A: 255}
-		for _, off := range []pt{{0, -ry}, {0, ry}, {-rx, 0}, {rx, 0}} {
+		for _, off := range []pt{{-rx, -ry / 2}, {rx, -ry / 2}, {-rx, ry / 2}, {rx, ry / 2}} {
 			fx, fy := snap(cx+off.x), snap(cy+off.y)
 			c.fillBlock(fx, fy, flash)
 			c.fillBlock(fx-block, fy, withAlpha(flash, 160))
@@ -104,6 +131,15 @@ func (g *generator) drawAura(c *canvas, stage int) {
 			c.fillBlock(fx, fy-block, withAlpha(flash, 160))
 			c.fillBlock(fx, fy+block, withAlpha(flash, 160))
 		}
+
+		// legend halo, floating above the head — drawn in the FRONT aura so it
+		// sits over any hairstyle or helmet (and clear of the r5 frame, y>=12)
+		hx := anchorHeadCenter.x
+		halo := color.RGBA{R: 255, G: 232, B: 150, A: 255}
+		c.rectBlocks(hx-block*3, 12, hx+block*3, 16, halo)
+		c.fillBlock(hx-block*4, 16, halo)
+		c.fillBlock(hx+block*3, 16, halo)
+		c.fillBlock(hx-block, 12, flash) // gleam
 	}
 }
 

@@ -131,21 +131,38 @@ func (s *Store) seedAchievements() {
 }
 
 func (s *Store) seedShopItems() {
-	priceOwl := 1200
-	priceBlade := 3500
-	priceNeon := 400
-	priceFreeze := 300
-	priceVitArmor := 900
+	price := func(v int) *int { return &v }
+	cosmetic := domain.ItemEffect{Type: "cosmetic"}
 
+	// Every non-consumable id has a paper-doll sprite in cmd/genassets
+	// (itemCatalog) — keep the two lists in sync.
 	s.shopItems = []domain.ShopItem{
-		{ID: "amulet_owl", Name: "Амулет Совы", Slot: "amulet", Rarity: "rare", Price: &priceOwl, Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatINT, Value: 0.10}, Purchasable: true, Icon: "📿"},
-		{ID: "blade_focus", Name: "Клинок Фокуса", Slot: "weapon", Rarity: "epic", Price: &priceBlade, Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatDIS, Value: 0.10}, Purchasable: true, Icon: "⚔️"},
-		{ID: "bg_neon_city", Name: "Неоновый город", Slot: "background", Rarity: "uncommon", Price: &priceNeon, Effect: domain.ItemEffect{Type: "cosmetic"}, Purchasable: true, Icon: "🖼️"},
-		{ID: "armor_vit", Name: "Доспех Стража", Slot: "armor", Rarity: "rare", Price: &priceVitArmor, Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatVIT, Value: 0.08}, Purchasable: true, Icon: "🛡️"},
-		{ID: "streak_freeze", Name: "Заморозка стрика", Slot: "consumable", Rarity: "common", Price: &priceFreeze, Effect: domain.ItemEffect{Type: "streak_shield", Charges: 1}, Purchasable: true, Icon: "🧊"},
-		// Legendary quest/achievement rewards: not purchasable (price nil).
+		// head
+		{ID: "helm_iron", Name: "Железный шлем", Slot: "head", Rarity: "common", Price: price(250), Effect: cosmetic, Purchasable: true, Icon: "🪖"},
+		{ID: "hood_seeker", Name: "Капюшон Искателя", Slot: "head", Rarity: "uncommon", Price: price(550), Effect: cosmetic, Purchasable: true, Icon: "🥷"},
+		{ID: "crown_sage", Name: "Корона Мудреца", Slot: "head", Rarity: "epic", Price: price(4200), Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatINT, Value: 0.08}, Purchasable: true, Icon: "👑"},
+		// armor
+		{ID: "vest_padded", Name: "Стёганый жилет", Slot: "armor", Rarity: "common", Price: price(300), Effect: cosmetic, Purchasable: true, Icon: "🦺"},
+		{ID: "armor_vit", Name: "Доспех Стража", Slot: "armor", Rarity: "rare", Price: price(900), Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatVIT, Value: 0.08}, Purchasable: true, Icon: "🛡️"},
+		// weapon
+		{ID: "sword_short", Name: "Короткий меч", Slot: "weapon", Rarity: "common", Price: price(250), Effect: cosmetic, Purchasable: true, Icon: "🗡️"},
+		{ID: "staff_arcane", Name: "Чародейский посох", Slot: "weapon", Rarity: "rare", Price: price(1500), Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatINT, Value: 0.05}, Purchasable: true, Icon: "🪄"},
+		{ID: "blade_focus", Name: "Клинок Фокуса", Slot: "weapon", Rarity: "epic", Price: price(3500), Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatDIS, Value: 0.10}, Purchasable: true, Icon: "⚔️"},
+		// amulet
+		{ID: "amulet_owl", Name: "Амулет Совы", Slot: "amulet", Rarity: "rare", Price: price(1200), Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatINT, Value: 0.10}, Purchasable: true, Icon: "📿"},
+		// back
+		{ID: "cloak_traveler", Name: "Плащ Путника", Slot: "back", Rarity: "uncommon", Price: price(600), Effect: cosmetic, Purchasable: true, Icon: "🧣"},
+		// boots
+		{ID: "boots_leather", Name: "Кожаные сапоги", Slot: "boots", Rarity: "common", Price: price(200), Effect: cosmetic, Purchasable: true, Icon: "👢"},
+		{ID: "boots_swift", Name: "Сапоги Ветра", Slot: "boots", Rarity: "rare", Price: price(1100), Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatSTR, Value: 0.05}, Purchasable: true, Icon: "👟"},
+		// background & consumable
+		{ID: "bg_neon_city", Name: "Неоновый город", Slot: "background", Rarity: "uncommon", Price: price(400), Effect: cosmetic, Purchasable: true, Icon: "🖼️"},
+		{ID: "streak_freeze", Name: "Заморозка стрика", Slot: "consumable", Rarity: "common", Price: price(300), Effect: domain.ItemEffect{Type: "streak_shield", Charges: 1}, Purchasable: true, Icon: "🧊"},
+		// Legendary quest/achievement/drop rewards: not purchasable (price nil).
 		{ID: "armor_titan", Name: "Доспех Титана", Slot: "armor", Rarity: "legendary", Price: nil, Effect: domain.ItemEffect{Type: "streak_shield", Charges: 1}, Purchasable: false, Icon: "🛡️"},
-		{ID: "legendary_cape_conquistador", Name: "Плащ Конкистадора", Slot: "aura", Rarity: "legendary", Price: nil, Effect: domain.ItemEffect{Type: "cosmetic"}, Purchasable: false, Icon: "🎯"},
+		{ID: "amulet_sun", Name: "Амулет Солнца", Slot: "amulet", Rarity: "legendary", Price: nil, Effect: domain.ItemEffect{Type: "xp_mult", Stat: domain.StatCHA, Value: 0.10}, Purchasable: false, Icon: "☀️"},
+		{ID: "wings_phoenix", Name: "Крылья Феникса", Slot: "back", Rarity: "legendary", Price: nil, Effect: cosmetic, Purchasable: false, Icon: "🪽"},
+		{ID: "legendary_cape_conquistador", Name: "Плащ Конкистадора", Slot: "aura", Rarity: "legendary", Price: nil, Effect: cosmetic, Purchasable: false, Icon: "🎯"},
 	}
 	s.shopByID = make(map[string]domain.ShopItem, len(s.shopItems))
 	for _, it := range s.shopItems {

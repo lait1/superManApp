@@ -106,6 +106,50 @@ func (c *canvas) rectBlocksRamp(x0, y0, x1, y1 int, ramp Ramp) {
 	}
 }
 
+// shadeRect fills a rect with simple form shading: light top row and left
+// column, shadow right column and bottom row, base elsewhere. Reads as a lit
+// volume without the banded look of a full vertical gradient.
+func (c *canvas) shadeRect(x0, y0, x1, y1 int, ramp Ramp) {
+	x0, y0 = snap(x0), snap(y0)
+	for y := y0; y < y1; y += block {
+		for x := x0; x < x1; x += block {
+			col := ramp[toneBase]
+			switch {
+			case y == y0 || x == x0:
+				col = ramp[toneLight]
+			case x >= x1-block || y >= y1-block:
+				col = ramp[toneShadow]
+			}
+			c.fillBlock(x, y, col)
+		}
+	}
+}
+
+// thickLineBlocks draws a 2-block-wide stepped line between two points on the
+// block grid (used for bent limbs / hair tails). Deterministic, no AA.
+func (c *canvas) thickLineBlocks(x0, y0, x1, y1 int, col color.RGBA) {
+	steps := abs(y1-y0) / block
+	if s := abs(x1-x0) / block; s > steps {
+		steps = s
+	}
+	if steps == 0 {
+		steps = 1
+	}
+	for i := 0; i <= steps; i++ {
+		x := x0 + (x1-x0)*i/steps
+		y := y0 + (y1-y0)*i/steps
+		c.fillBlock(snap(x), snap(y), col)
+		c.fillBlock(snap(x)+block, snap(y), col)
+	}
+}
+
+func abs(v int) int {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
 // ellipseBlocks fills a block-grid ellipse centered at (cx,cy) with radii rx,ry.
 func (c *canvas) ellipseBlocks(cx, cy, rx, ry int, col color.RGBA) {
 	c.ellipseBlocksFunc(cx, cy, rx, ry, func(bx, by int) (color.RGBA, bool) {
