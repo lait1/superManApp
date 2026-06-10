@@ -66,6 +66,15 @@ func main() {
 	tg := telegram.NewClient(cfg.TelegramBotToken)
 	sched := scheduler.New(st, tg, engine, cfg)
 
+	// Directory of the built Mini App frontend (web/dist). Served by the same
+	// process so the whole app runs as one service (docs/13-running.md).
+	// Overridable via STATIC_DIR; empty disables static serving (API only).
+	staticDir := "web/dist"
+	if v, ok := os.LookupEnv("STATIC_DIR"); ok {
+		staticDir = v
+	}
+	handler := server.Handler(tg.WebhookHandler(cfg.TelegramWebappURL), staticDir)
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -74,7 +83,7 @@ func main() {
 
 	httpServer := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           server.Routes(),
+		Handler:           handler,
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 

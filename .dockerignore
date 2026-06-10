@@ -1,0 +1,10 @@
+# Не тащим в build-контекст то, что собирается внутри образа или не нужно ему.
+web/node_modules
+web/dist
+node_modules
+.git
+.idea
+*.log
+.env
+.env.*
+!.env.example

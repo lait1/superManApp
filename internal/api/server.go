@@ -40,8 +40,16 @@ func NewServer(engine *game.Engine, st store.Store, cfg config.Config) *Server {
 
 // Routes registers all endpoints from docs/09 §2 on a net/http ServeMux using
 // Go 1.22+ method+path patterns, wraps them with the auth middleware and
-// returns the resulting handler.
+// returns the resulting handler. It is the API-only handler used by tests; the
+// production process composes it with the static frontend and bot webhook via
+// Handler (see static.go).
 func (s *Server) Routes() http.Handler {
+	return s.authMiddleware(s.apiMux())
+}
+
+// apiMux builds the bare REST mux (no auth wrapper) so both Routes (tests) and
+// Handler (production) can mount it.
+func (s *Server) apiMux() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/v1/me", s.handleMe)
@@ -59,7 +67,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/report/today", s.handleReportToday)
 	mux.HandleFunc("PUT /api/v1/settings/notifications", s.handleNotificationSettings)
 
-	return s.authMiddleware(mux)
+	return mux
 }
 
 // --- helpers ---
