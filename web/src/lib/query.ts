@@ -44,6 +44,10 @@ export const queryClient = new QueryClient({
         if (error instanceof ApiClientError && error.status >= 400 && error.status < 500) {
           return false;
         }
+        // Maintenance (503) is intentional — surface it immediately, don't retry.
+        if (error instanceof ApiClientError && error.code === 'maintenance') {
+          return false;
+        }
         return failureCount < 2;
       },
       refetchOnWindowFocus: false,

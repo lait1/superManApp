@@ -109,6 +109,12 @@ func (s *Scheduler) notifyUser(ctx context.Context, now time.Time, u *domain.Use
 		return
 	}
 
+	// While the app is under maintenance, deliver only to the admin so debugging
+	// does not spam users (config.MaintenanceMode).
+	if s.cfg.MaintenanceMode && !s.cfg.IsAdmin(u.TelegramUserID) {
+		return
+	}
+
 	loc := userLocation(u.Timezone)
 	local := now.In(loc)
 

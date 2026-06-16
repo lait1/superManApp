@@ -60,6 +60,13 @@ func main() {
 	if cfg.StartingGold > 0 {
 		log.Printf("new characters start with %d gold (STARTING_GOLD)", cfg.StartingGold)
 	}
+	if cfg.MaintenanceMode {
+		if cfg.AdminTelegramID == 0 {
+			log.Printf("MAINTENANCE_MODE on, ADMIN_TELEGRAM_ID unset: app closed for everyone, no notifications will be sent")
+		} else {
+			log.Printf("MAINTENANCE_MODE on: app open only to admin telegram id %d; notifications go only to admin", cfg.AdminTelegramID)
+		}
+	}
 
 	engine := game.New(st, balance)
 	server := api.NewServer(engine, st, cfg)

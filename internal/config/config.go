@@ -31,6 +31,14 @@ type Config struct {
 	// (env STARTING_GOLD). Defaults to 10000 in dev — enough to test the shop
 	// end-to-end — and 0 in prod.
 	StartingGold int64
+	// MaintenanceMode closes the app for everyone except the admin and makes the
+	// scheduler send notifications only to the admin (env MAINTENANCE_MODE). Used
+	// while debugging the live app.
+	MaintenanceMode bool
+	// AdminTelegramID is the Telegram user id of the owner (env ADMIN_TELEGRAM_ID).
+	// It is the only account that bypasses MaintenanceMode and still receives
+	// notifications. 0 means "no admin" (app fully closed while in maintenance).
+	AdminTelegramID int64
 }
 
 // Load reads configuration from the environment, applying defaults.
@@ -56,11 +64,28 @@ func Load() Config {
 			cfg.StartingGold = v
 		}
 	}
+	if raw := os.Getenv("MAINTENANCE_MODE"); raw != "" {
+		if v, err := strconv.ParseBool(raw); err == nil {
+			cfg.MaintenanceMode = v
+		}
+	}
+	if raw := os.Getenv("ADMIN_TELEGRAM_ID"); raw != "" {
+		if v, err := strconv.ParseInt(raw, 10, 64); err == nil {
+			cfg.AdminTelegramID = v
+		}
+	}
 	return cfg
 }
 
 // IsDev reports whether the process runs in the development environment.
 func (c Config) IsDev() bool { return c.Env == "dev" }
+
+// IsAdmin reports whether the given Telegram user id is the configured owner.
+// It is the single source of truth for the maintenance bypass and the
+// admin-only notification rule. A zero AdminTelegramID matches nobody.
+func (c Config) IsAdmin(tgID *int64) bool {
+	return tgID != nil && *tgID != 0 && *tgID == c.AdminTelegramID
+}
 
 func getenv(key, def string) string {
 	if v := os.Getenv(key); v != "" {

@@ -86,6 +86,15 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// Maintenance gate: while the app is closed, only the admin gets through;
+		// everyone else sees the maintenance screen (the frontend keys off the
+		// "maintenance" error code). Healthz and the bot webhook stay outside the
+		// auth middleware, so they keep working.
+		if s.cfg.MaintenanceMode && !s.cfg.IsAdmin(user.TelegramUserID) {
+			s.writeError(w, http.StatusServiceUnavailable, "maintenance", "app is under maintenance")
+			return
+		}
+
 		char, err := s.store.GetCharacter(ctx, user.ID)
 		if err != nil {
 			s.writeError(w, http.StatusInternalServerError, "internal", "could not load character")

@@ -28,6 +28,7 @@ const ShopScreen = lazy(() => import('./screens/Shop/ShopScreen'));
 const ProfileScreen = lazy(() => import('./screens/Profile/ProfileScreen'));
 const LabScreen = lazy(() => import('./screens/Lab/LabScreen'));
 const OnboardingScreen = lazy(() => import('./screens/Onboarding/OnboardingScreen'));
+const MaintenanceScreen = lazy(() => import('./screens/Maintenance/MaintenanceScreen'));
 
 function ScreenFallback() {
   return (
@@ -39,7 +40,22 @@ function ScreenFallback() {
 
 export default function App() {
   const openCheckin = useStore((s) => s.openCheckin);
-  const { data: me } = useMe();
+  const { data: me, error } = useMe();
+
+  // Maintenance gate: the backend (MAINTENANCE_MODE on) answers /me with a 503
+  // "maintenance" error for everyone except the admin. Show a full-screen
+  // notice instead of the app shell.
+  if (error?.code === 'maintenance') {
+    return (
+      <div className="app-shell">
+        <main className="app-content">
+          <Suspense fallback={<ScreenFallback />}>
+            <MaintenanceScreen />
+          </Suspense>
+        </main>
+      </div>
+    );
+  }
 
   // First-run gate: until the hero is named & styled, the whole shell is the
   // onboarding flow (no tabs, no routes — RPG "create your character" moment).
